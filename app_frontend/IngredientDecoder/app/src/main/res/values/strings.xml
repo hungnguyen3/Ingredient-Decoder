@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Ingredient Decoder</string>
+    <string name="button_scan">Scan</string>
+    <string name="button_upload">Upload</string>
+    <string name="username">username</string>
+    <string name="login">login</string>
+    <string name="signup">sign up</string>
+    <string name="add">add</string>
+    <string name="clear">clear</string>
+
+</resources>
