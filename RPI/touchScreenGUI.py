@@ -4,6 +4,12 @@ from PIL import ImageTk, Image
 from tkinter import Text
 import os
 
+#current working directory
+workingDir = os.path.dirname(os.path.abspath(__file__))
+
+def displayList(plist):
+    print('hello')
+
 root = tk.Tk()
 root.attributes('-fullscreen', True)
 
@@ -30,7 +36,7 @@ yourList.pack()
 takePic = tk.Button(frame, text = "Check ingredients", padx = 10, pady = 5, fg = "white", bg = "black")
 takePic.pack()
 
-img = ImageTk.PhotoImage(Image.open("/home/pi/Desktop/CPEN-391-Ingredient-Decoder/RPI/cat.gif"))
+img = ImageTk.PhotoImage(Image.open(workingDir + "/images/cat.gif"))
 panel = tk.Label(frame, image = img)
 panel.pack()
 
