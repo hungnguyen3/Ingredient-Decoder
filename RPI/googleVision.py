@@ -32,6 +32,11 @@ def requestOCR(url, key, imgpath):
                            headers = {'Content-Type': 'application/json'})
     return response
 
+# convert image only
+#imgpath = workingDir + "/images/download.jpg"
+#imgtest = makeImageData(imgpath)
+#print(imgtest)
+
 # make the request here
 with open(workingDir + '/envVariables.json') as f:
     data = json.load(f)
@@ -41,5 +46,4 @@ imgpath = workingDir + "/images/download.jpg"
 visionURL = 'https://vision.googleapis.com/v1/images:annotate'
 
 result = requestOCR(visionURL, key, imgpath)
-
 print(result.json())
