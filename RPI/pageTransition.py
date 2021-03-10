@@ -50,6 +50,8 @@ class App(tk.Tk):
             str1 += " "
         user_list = tk.Label(self.frames[context], text = 'Here is your list: ' + str1)
         user_list.pack(padx=10, pady=10)
+    def google_vision_ocr(self):
+
 
 class LandingPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -77,10 +79,10 @@ class RegularItems(tk.Frame):
         scan_items.pack()
         start_page = tk.Button(self, text = "Back to Home Page", command=lambda:controller.show_frame(LandingPage))
         start_page.pack()
-        img = ImageTk.PhotoImage(Image.open(workingDir + "/images/cat.gif"))
-        print(workingDir + "/images/cat.gif")
-        panel = tk.Label(self, image = img)
+        self.img = ImageTk.PhotoImage(Image.open(workingDir + "/images/sushi.bmp"))
+        panel = tk.Label(self, image = self.img)
         panel.pack()
+
 
 class CustomItems(tk.Frame):
     def __init__(self, parent, controller):
@@ -93,6 +95,9 @@ class CustomItems(tk.Frame):
         scan_items.pack()
         start_page = tk.Button(self, text = "Back to Home Page", command=lambda:controller.show_frame(LandingPage))
         start_page.pack()
+        self.img = ImageTk.PhotoImage(Image.open(workingDir + "/images/cat.gif"))
+        panel = tk.Label(self, image = self.img)
+        panel.pack()
 
 class MainMenu:
     def __init__(self, master):
