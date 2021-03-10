@@ -62,7 +62,7 @@ def requestOCR(url, key, imgpath):
 #print(imgtest)
 
 # make the request here
-with open(workingDir + '/envVariables.json') as f:
+with open(workingDir + '/env.json') as f:
     data = json.load(f)
 
 key = data["api_key"]
