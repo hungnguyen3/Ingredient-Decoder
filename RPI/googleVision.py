@@ -38,6 +38,7 @@ def requestRecognition(url, key, imgpath):
                            data = imgdata,
                            params = {'key': key},
                            headers = {'Content-Type': 'application/json'})
+    print("hello from requestRecognition")
     return response
 
 # convert image only

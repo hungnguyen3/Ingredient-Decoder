@@ -1,9 +1,12 @@
+import json
 import tkinter as tk
 import requests
 from PIL import ImageTk, Image
 import os
 
 # current working directory
+from googleVision import requestRecognition
+
 workingDir = os.path.dirname(os.path.abspath(__file__))
 backgroundColour = "#263D42"
 
@@ -38,7 +41,16 @@ class App(tk.Tk):
     def show_frame(self, context):
         frame = self.frames[context]
         frame.tkraise()
-    # def google_vision_ocr(self):
+
+    def google_vision(self, relativeImgPath, visionFunction):
+        with open(workingDir + '/env.json') as f:
+            data = json.load(f)
+        key = data["api_key"]
+        imgpath = workingDir + relativeImgPath
+        visionURL = 'https://vision.googleapis.com/v1/images:annotate'
+
+        result = visionFunction(visionURL, key, imgpath)
+
 
 class LandingPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -56,6 +68,9 @@ class LandingPage(tk.Frame):
 
         user_list = tk.Button(self, text="View personalized list", command=lambda: self.show_plist(LandingPage))
         user_list.pack()
+
+        testy = tk.Button(self, text="Testy boi", command=lambda: controller.google_vision("/images/download.jpg", requestRecognition))
+        testy.pack()
 
     def show_plist(self, context):
         URL = "http://52.138.39.36:3000/plist"
