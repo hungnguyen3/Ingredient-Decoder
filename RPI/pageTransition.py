@@ -1,5 +1,10 @@
 import tkinter as tk
 import requests
+from PIL import ImageTk, Image
+import os
+
+#current working directory
+workingDir = os.path.dirname(os.path.abspath(__file__))
 
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -33,8 +38,17 @@ class App(tk.Tk):
         URL = "http://52.138.39.36:3000/plist"
         userName = 'customer1'
         PARAMS = {'username': 'customer1'}
-        userList = requests.post(url = URL, json = PARAMS)
-        user_list = tk.Label(self.frames[context], text = userList.json())
+        response = requests.post(url = URL, json = PARAMS)
+        resJson = response.json()
+        userList = []
+
+        for element in resJson['message']:
+            userList.append(element['p'])
+        str1 = ""
+        for element in userList:
+            str1 += element
+            str1 += " "
+        user_list = tk.Label(self.frames[context], text = 'Here is your list: ' + str1)
         user_list.pack(padx=10, pady=10)
 
 class LandingPage(tk.Frame):
@@ -59,10 +73,14 @@ class RegularItems(tk.Frame):
         label.config(font=('helvetica', 25))
         label.pack(padx=10, pady=10)
 
-        scan_items = tk.Button(self, text = "Check Ingredients")
+        scan_items = tk.Button(self, text = "Check Ingredients =>")
         scan_items.pack()
         start_page = tk.Button(self, text = "Back to Home Page", command=lambda:controller.show_frame(LandingPage))
         start_page.pack()
+        img = ImageTk.PhotoImage(Image.open(workingDir + "/images/cat.gif"))
+        print(workingDir + "/images/cat.gif")
+        panel = tk.Label(self, image = img)
+        panel.pack()
 
 class CustomItems(tk.Frame):
     def __init__(self, parent, controller):
