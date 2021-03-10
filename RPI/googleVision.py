@@ -8,7 +8,7 @@ import json
 workingDir = os.path.dirname(os.path.abspath(__file__))
 
 #function convert images into base64 and create req body for API call
-def makeImageData(imgpath):
+def prepareRequest(imgpath, type, max_results):
     req = None
     with open(imgpath, 'rb') as f_img:
         b64 = base64.b64encode(f_img.read()).decode()
@@ -17,49 +17,33 @@ def makeImageData(imgpath):
                 'content': b64
             },
             'features': [{
-                'type': 'DOCUMENT_TEXT_DETECTION',
-                'maxResults': 1
+                'type': type,
+                'maxResults': max_results
             }]
         }
     return json.dumps({"requests": req}).encode()
 
-#google cloud vision ORC API call
+#google cloud vision OCR API call
 def requestOCR(url, key, imgpath):
-    imgdata = makeImageData(imgpath)
+    imgdata = prepareRequest(imgpath, 'TEXT_DETECTION', 1)
     response = requests.post(url,
                            data = imgdata,
                            params = {'key': key},
                            headers = {'Content-Type': 'application/json'})
     return response
 
-# def detect_labels(path):
-#     """Detects labels in the file."""
-#     from google.cloud import vision
-#     import io
-#     client = vision.ImageAnnotatorClient()
-#
-#     with io.open(path, 'rb') as image_file:
-#         content = image_file.read()
-#
-#     image = vision.Image(content=content)
-#
-#     response = client.label_detection(image=image)
-#     labels = response.label_annotations
-#     print('Labels:')
-#
-#     for label in labels:
-#         print(label.description)
-#
-#     if response.error.message:
-#         raise Exception(
-#             '{}\nFor more info on error messages, check: '
-#             'https://cloud.google.com/apis/design/errors'.format(
-#                 response.error.message))
+def requestRecognition(url, key, imgpath):
+    imgdata = prepareRequest(imgpath, 'LABEL_DETECTION', 5)
+    response = requests.post(url,
+                           data = imgdata,
+                           params = {'key': key},
+                           headers = {'Content-Type': 'application/json'})
+    return response
 
 # convert image only
-#imgpath = workingDir + "/images/download.jpg"
-#imgtest = makeImageData(imgpath)
-#print(imgtest)
+# imgpath = workingDir + "/images/download.jpg"
+# imgtest = ocrRequest(imgpath)
+# print(imgtest)
 
 # make the request here
 with open(workingDir + '/env.json') as f:
@@ -71,6 +55,8 @@ visionURL = 'https://vision.googleapis.com/v1/images:annotate'
 
 result = requestOCR(visionURL, key, imgpath)
 print(result.json())
-#
-# objectPath = "images/sushi.bmp"
-# result = detect_labels()
+
+result = requestRecognition(visionURL, key, imgpath)
+print(result.json())
+
+
