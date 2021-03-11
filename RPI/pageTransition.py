@@ -14,6 +14,26 @@ workingDir = os.path.dirname(os.path.abspath(__file__))
 backgroundColour = "#263D42"
 
 
+class CommonDisplay:
+    def __init__(self, *args, **kwargs):
+        readImg = Image.open(workingDir + "/images/Capture.jpg")
+        width = readImg.width
+        height = readImg.height
+        while height > 500 or width > 500:
+            height = height * 0.9
+            width = width * 0.9
+        width = math.floor(width)
+        height = math.floor(height)
+        readImg = readImg.resize((width, height), Image.ANTIALIAS)
+        self.img = ImageTk.PhotoImage(readImg)
+
+
+
+
+def refresh(label):
+    label.destroy()
+
+
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         print("uwu " + os.path.realpath(__file__))
@@ -79,9 +99,6 @@ class LandingPage(tk.Frame):
                           command=lambda: controller.google_vision("/images/download.jpg", requestRecognition))
         testy.pack()
 
-    def refresh(self, label):
-        label.destroy()
-
     def show_plist(self, context, controller):
         URL = "http://52.138.39.36:3000/plist"
         userName = 'customer1'
@@ -90,7 +107,7 @@ class LandingPage(tk.Frame):
         resJson = response.json()
         userList = []
 
-        self.refresh(self.user_list)
+        refresh(self.user_list)
         for element in resJson['message']:
             userList.append(element['p'])
         str1 = ""
@@ -101,9 +118,10 @@ class LandingPage(tk.Frame):
         self.user_list.pack(padx=10, pady=10)
 
 
-class RegularItems(tk.Frame):
+class RegularItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+        CommonDisplay.__init__(self)
 
         label = tk.Label(self, text="Scan regular items here")
         label.config(font=('helvetica', 25))
@@ -116,24 +134,23 @@ class RegularItems(tk.Frame):
 
         label = tk.Label(self, text="Place item inside box with ingredients list facing camera")
         label.pack()
-        promptImg = Image.open(workingDir + "/images/Capture.jpg")
-        self.promptImg = ImageTk.PhotoImage(promptImg)
-        promptLabel = tk.Label(self, image=self.promptImg)
+
+        promptLabel = tk.Label(self, image=self.img)
         promptLabel.pack()
 
         # display the cropped image
-        readImg = Image.open(workingDir + "/images/download.jpg")
-        width = readImg.width
-        height = readImg.height
-        while height > 500 or width > 500:
-            height = height * 0.9
-            width = width * 0.9
-        width = math.floor(width)
-        height = math.floor(height)
-        readImg = readImg.resize((width, height), Image.ANTIALIAS)
-        self.img = ImageTk.PhotoImage(readImg)
-        panel = tk.Label(self, image=self.img)
-        panel.pack()
+        #readImg = Image.open(workingDir + "/images/download.jpg")
+        #width = readImg.width
+        #height = readImg.height
+        #while height > 500 or width > 500:
+        #    height = height * 0.9
+        #    width = width * 0.9
+        #width = math.floor(width)
+        #height = math.floor(height)
+        #readImg = readImg.resize((width, height), Image.ANTIALIAS)
+        #self.crop_img = ImageTk.PhotoImage(readImg)
+        #panel = tk.Label(self, image=self.crop_img)
+        #panel.pack()
 
 
 class CustomItems(tk.Frame):
@@ -175,10 +192,14 @@ class MainMenu:
 app = App()
 
 def pollPicture():
-    app.after(3000, pollPicture)
+    app.after(1000, pollPicture)
     pictureExists, img = interface.takeImage(workingDir)
     print(pictureExists, img)
+    # refresh(commonDisplay.img)
+    if pictureExists:
+        app.frames[RegularItems].img = ImageTk.PhotoImage(Image.open(workingDir + "/images/download.jpg"))
 
-pollPicture()
+
+app.after(3000,pollPicture())
 
 app.mainloop()
