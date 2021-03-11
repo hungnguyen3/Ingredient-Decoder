@@ -7,7 +7,7 @@ import math
 import interface
 
 # import functions and classes
-from googleVision import requestRecognition
+from googleVision import requestRecognition, requestOCR, retrieveText, getMatchingArr
 
 # current working directory
 workingDir = os.path.dirname(os.path.abspath(__file__))
@@ -109,7 +109,7 @@ class LandingPage(tk.Frame):
 
         refresh(self.user_list)
         for element in resJson['message']:
-            userList.append(element['p'])
+            userList.append(element["p"])
         str1 = ""
         for element in userList:
             str1 += element
@@ -127,7 +127,7 @@ class RegularItems(tk.Frame, CommonDisplay):
         label.config(font=('helvetica', 25))
         label.pack(padx=10, pady=10)
 
-        scan_items = tk.Button(self, text="Check Ingredients =>")
+        scan_items = tk.Button(self, text="Check Ingredients =>", command=lambda: self.checkIngredientsORC(controller, "customer1"))
         scan_items.pack()
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
@@ -138,6 +138,29 @@ class RegularItems(tk.Frame, CommonDisplay):
         self.promptLabel = tk.Label(self, image=self.img)
         self.promptLabel.pack()
 
+    def checkIngredientsORC(self, controller, username):
+        # get the text from OCR
+        responseORC = controller.google_vision("/images/download.jpg", requestOCR)
+        fullText = retrieveText(responseORC)
+        print(fullText)
+        # get user plist
+        #URL = "http://52.138.39.36:3000/plist"
+        #PARAMS = {'username': username}
+        #response = requests.post(url=URL, json=PARAMS)
+        #resJson = response.json()
+        #userList = []
+
+        #refresh(self.user_list)
+        #for element in resJson['message']:
+        #    userList.append(element["p"])
+        # get the matching array
+        #matchingArr = getMatchingArr(fullText, userList)
+        #if(not matchingArr):
+        #    self.alert = tk.Label(self, text= "No harmful ingredients detected")
+        #    self.alert.pack()
+        #else:
+        #    self.alert = tk.Label(self, text= "List of harmful ingredients found: " + matchingArr)
+        #    self.alert.pack()
 
 class CustomItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
