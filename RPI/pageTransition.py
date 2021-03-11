@@ -73,10 +73,14 @@ class LandingPage(tk.Frame):
         user_list = tk.Button(self, text="View personalized list",
                               command=lambda: self.show_plist(LandingPage, controller))
         user_list.pack()
+        self.user_list = tk.Label()
 
         testy = tk.Button(self, text="Testy boi",
                           command=lambda: controller.google_vision("/images/download.jpg", requestRecognition))
         testy.pack()
+
+    def refresh(self, label):
+        label.destroy()
 
     def show_plist(self, context, controller):
         URL = "http://52.138.39.36:3000/plist"
@@ -86,14 +90,15 @@ class LandingPage(tk.Frame):
         resJson = response.json()
         userList = []
 
+        self.refresh(self.user_list)
         for element in resJson['message']:
             userList.append(element['p'])
         str1 = ""
         for element in userList:
             str1 += element
             str1 += " "
-        user_list = tk.Label(controller.frames[context], text='Here is your list: ' + str1)
-        user_list.pack(padx=10, pady=10)
+        self.user_list = tk.Label(controller.frames[context], text='Here is your list: ' + str1)
+        self.user_list.pack(padx=10, pady=10)
 
 
 class RegularItems(tk.Frame):
