@@ -47,17 +47,17 @@ def requestRecognition(url, key, imgpath):
 # print(imgtest)
 
 # make the request here
-with open(workingDir + '/env.json') as f:
-    data = json.load(f)
-
-key = data["api_key"]
-imgpath = workingDir + "/images/download.jpg"
-visionURL = 'https://vision.googleapis.com/v1/images:annotate'
-
-result = requestOCR(visionURL, key, imgpath)
-print(result.json())
-
-result = requestRecognition(visionURL, key, imgpath)
-print(result.json())
+# with open(workingDir + '/env.json') as f:
+#     data = json.load(f)
+#
+# key = data["api_key"]
+# imgpath = workingDir + "/images/download.jpg"
+# visionURL = 'https://vision.googleapis.com/v1/images:annotate'
+#
+# result = requestOCR(visionURL, key, imgpath)
+# print(result.json())
+#
+# result = requestRecognition(visionURL, key, imgpath)
+# print(result.json())
 
 

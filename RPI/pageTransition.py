@@ -3,10 +3,13 @@ import tkinter as tk
 import requests
 from PIL import ImageTk, Image
 import os
+import math
+import interface
 
-# current working directory
+# import functions and classes
 from googleVision import requestRecognition
 
+# current working directory
 workingDir = os.path.dirname(os.path.abspath(__file__))
 backgroundColour = "#263D42"
 
@@ -66,13 +69,15 @@ class LandingPage(tk.Frame):
         custom_page = tk.Button(self, text="Custom Items", command=lambda: controller.show_frame(CustomItems))
         custom_page.pack()
 
-        user_list = tk.Button(self, text="View personalized list", command=lambda: self.show_plist(LandingPage))
+        user_list = tk.Button(self, text="View personalized list",
+                              command=lambda: self.show_plist(LandingPage, controller))
         user_list.pack()
 
-        testy = tk.Button(self, text="Testy boi", command=lambda: controller.google_vision("/images/download.jpg", requestRecognition))
+        testy = tk.Button(self, text="Testy boi",
+                          command=lambda: controller.google_vision("/images/download.jpg", requestRecognition))
         testy.pack()
 
-    def show_plist(self, context):
+    def show_plist(self, context, controller):
         URL = "http://52.138.39.36:3000/plist"
         userName = 'customer1'
         PARAMS = {'username': 'customer1'}
@@ -86,7 +91,7 @@ class LandingPage(tk.Frame):
         for element in userList:
             str1 += element
             str1 += " "
-        user_list = tk.Label(self.frames[context], text='Here is your list: ' + str1)
+        user_list = tk.Label(controller.frames[context], text='Here is your list: ' + str1)
         user_list.pack(padx=10, pady=10)
 
 
@@ -102,7 +107,25 @@ class RegularItems(tk.Frame):
         scan_items.pack()
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
-        self.img = ImageTk.PhotoImage(Image.open(workingDir + "/images/sushi.bmp"))
+
+        label = tk.Label(self, text="Place item inside box with ingredients list facing camera")
+        label.pack()
+        promptImg = Image.open(workingDir + "/images/Capture.jpg")
+        self.promptImg = ImageTk.PhotoImage(promptImg)
+        promptLabel = tk.Label(self, image=self.promptImg)
+        promptLabel.pack()
+
+        # display the cropped image
+        readImg = Image.open(workingDir + "/images/download.jpg")
+        width = readImg.width
+        height = readImg.height
+        while height > 500 or width > 500:
+            height = height * 0.9
+            width = width * 0.9
+        width = math.floor(width)
+        height = math.floor(height)
+        readImg = readImg.resize((width, height), Image.ANTIALIAS)
+        self.img = ImageTk.PhotoImage(readImg)
         panel = tk.Label(self, image=self.img)
         panel.pack()
 
@@ -118,7 +141,17 @@ class CustomItems(tk.Frame):
         scan_items.pack()
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
-        self.img = ImageTk.PhotoImage(Image.open(workingDir + "/images/cat.gif"))
+
+        readImg = Image.open(workingDir + "/images/sushi.bmp")
+        width = readImg.width
+        height = readImg.height
+        while height > 500 or width > 500:
+            height = height * 0.9
+            width = width * 0.9
+        width = math.floor(width)
+        height = math.floor(height)
+        readImg = readImg.resize((width, height), Image.ANTIALIAS)
+        self.img = ImageTk.PhotoImage(readImg)
         panel = tk.Label(self, image=self.img)
         panel.pack()
 
@@ -132,5 +165,14 @@ class MainMenu:
         menubar.add_cascade(label="File", menu=filemenu)
         master.config(menu=menubar)
 
+
 app = App()
+
+def pollPicture():
+    app.after(3000, pollPicture)
+    pictureExists, img = interface.takeImage(workingDir)
+    print(pictureExists, img)
+
+pollPicture()
+
 app.mainloop()
