@@ -116,13 +116,13 @@ class RegularItems(tk.Frame):
 
         label = tk.Label(self, text="Place item inside box with ingredients list facing camera")
         label.pack()
-        promptImg = Image.open("images/Capture.jpg")
+        promptImg = Image.open(workingDir + "/images/Capture.jpg")
         self.promptImg = ImageTk.PhotoImage(promptImg)
         promptLabel = tk.Label(self, image=self.promptImg)
         promptLabel.pack()
 
         # display the cropped image
-        readImg = Image.open("images/download.jpg")
+        readImg = Image.open(workingDir + "/images/download.jpg")
         width = readImg.width
         height = readImg.height
         while height > 500 or width > 500:
@@ -148,7 +148,7 @@ class CustomItems(tk.Frame):
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
 
-        readImg = Image.open("images/sushi.bmp")
+        readImg = Image.open(workingDir + "/images/sushi.bmp")
         width = readImg.width
         height = readImg.height
         while height > 500 or width > 500:
