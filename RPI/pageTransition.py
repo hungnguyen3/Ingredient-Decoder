@@ -13,22 +13,22 @@ from googleVision import requestRecognition
 workingDir = os.path.dirname(os.path.abspath(__file__))
 backgroundColour = "#263D42"
 
+def resizeImage(relativePath):
+    readImg = Image.open(workingDir + relativePath)
+    width = readImg.width
+    height = readImg.height
+    while height > 500 or width > 500:
+        height = height * 0.9
+        width = width * 0.9
+    width = math.floor(width)
+    height = math.floor(height)
+    readImg = readImg.resize((width, height), Image.ANTIALIAS)
+    return readImg
 
 class CommonDisplay:
     def __init__(self, *args, **kwargs):
-        readImg = Image.open(workingDir + "/images/Capture.jpg")
-        width = readImg.width
-        height = readImg.height
-        while height > 500 or width > 500:
-            height = height * 0.9
-            width = width * 0.9
-        width = math.floor(width)
-        height = math.floor(height)
-        readImg = readImg.resize((width, height), Image.ANTIALIAS)
+        readImg = resizeImage("/images/Capture.jpg")
         self.img = ImageTk.PhotoImage(readImg)
-
-
-
 
 def refresh(label):
     label.destroy()
@@ -132,30 +132,17 @@ class RegularItems(tk.Frame, CommonDisplay):
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
 
-        label = tk.Label(self, text="Place item inside box with ingredients list facing camera")
-        label.pack()
+        self.instruction = tk.Label(self, text="Place item inside box with ingredients list facing camera")
+        self.instruction.pack()
 
-        promptLabel = tk.Label(self, image=self.img)
-        promptLabel.pack()
-
-        # display the cropped image
-        #readImg = Image.open(workingDir + "/images/download.jpg")
-        #width = readImg.width
-        #height = readImg.height
-        #while height > 500 or width > 500:
-        #    height = height * 0.9
-        #    width = width * 0.9
-        #width = math.floor(width)
-        #height = math.floor(height)
-        #readImg = readImg.resize((width, height), Image.ANTIALIAS)
-        #self.crop_img = ImageTk.PhotoImage(readImg)
-        #panel = tk.Label(self, image=self.crop_img)
-        #panel.pack()
+        self.promptLabel = tk.Label(self, image=self.img)
+        self.promptLabel.pack()
 
 
-class CustomItems(tk.Frame):
+class CustomItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+        CommonDisplay.__init__(self)
 
         label = tk.Label(self, text="Scan store custom items here")
         label.config(font=('helvetica', 25))
@@ -165,18 +152,11 @@ class CustomItems(tk.Frame):
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
 
-        readImg = Image.open(workingDir + "/images/sushi.bmp")
-        width = readImg.width
-        height = readImg.height
-        while height > 500 or width > 500:
-            height = height * 0.9
-            width = width * 0.9
-        width = math.floor(width)
-        height = math.floor(height)
-        readImg = readImg.resize((width, height), Image.ANTIALIAS)
-        self.img = ImageTk.PhotoImage(readImg)
-        panel = tk.Label(self, image=self.img)
-        panel.pack()
+        self.instruction = tk.Label(self, text="Place item inside box with ingredients list facing camera")
+        self.instruction.pack()
+
+        self.promptLabel = tk.Label(self, image=self.img)
+        self.promptLabel.pack()
 
 
 class MainMenu:
@@ -191,14 +171,30 @@ class MainMenu:
 
 app = App()
 
+def loadProcessedImage(frame):
+    # tell users to make google vision call
+    refresh(app.frames[frame].instruction)
+    app.frames[frame].instruction = tk.Label(app.frames[frame], text="Your item is ready to be scanned")
+    app.frames[frame].instruction.pack()
+
+    # change the image
+    refresh(app.frames[frame].promptLabel)
+    readImg = resizeImage("/images/download.jpg")
+    app.frames[frame].img = ImageTk.PhotoImage(readImg)
+    app.frames[frame].promptLabel = tk.Label(app.frames[frame], image=app.frames[frame].img)
+    app.frames[frame].promptLabel.pack()
+
+
 def pollPicture():
     app.after(1000, pollPicture)
     pictureExists, img = interface.takeImage(workingDir)
     print(pictureExists, img)
-    # refresh(commonDisplay.img)
     if pictureExists:
-        app.frames[RegularItems].img = ImageTk.PhotoImage(Image.open(workingDir + "/images/download.jpg"))
+        # change the image for regular items
+        loadProcessedImage(RegularItems)
 
+        # change the image for custom items
+        loadProcessedImage(CustomItems)
 
 app.after(3000,pollPicture())
 
