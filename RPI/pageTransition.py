@@ -3,8 +3,9 @@ import tkinter as tk
 import requests
 from PIL import ImageTk, Image
 import os
-import math
 import interface
+import renderingUtil
+import database
 
 # import functions and classes
 import googleVision
@@ -12,57 +13,6 @@ import googleVision
 # current working directory
 workingDir = os.path.dirname(os.path.abspath(__file__))
 backgroundColour = "#263D42"
-
-
-def resizeImage(relativePath):
-    readImg = Image.open(workingDir + relativePath)
-    width = readImg.width
-    height = readImg.height
-    while height > 500 or width > 500:
-        height = height * 0.9
-        width = width * 0.9
-    width = math.floor(width)
-    height = math.floor(height)
-    readImg = readImg.resize((width, height), Image.ANTIALIAS)
-    return readImg
-
-
-class CommonDisplay:
-    def __init__(self, *args, **kwargs):
-        readImg = resizeImage("/images/Capture.jpg")
-        self.img = ImageTk.PhotoImage(readImg)
-
-    def checkIngredientsOCR(self, controller, username):
-        # get the text from OCR
-        responseOCR = googleVision.requestOCR("/images/download.jpg")
-
-        # get user plist
-        URL = "http://52.138.39.36:3000/plist"
-        PARAMS = {'username': username}
-        response = requests.post(url=URL, json=PARAMS)
-        resJson = response.json()
-        userList = []
-
-        for element in resJson['message']:
-            userList.append(element["p"])
-
-        # get the matching array
-        matchingArr = googleVision.getMatchingArr(responseOCR, userList)
-        if not matchingArr:
-            self.alert = tk.Label(self, text="No harmful ingredients detected")
-            self.alert.pack()
-        else:
-            refresh(self.alert)
-            warning = "We found the following matching ingredients that you might not want: \n "
-            for element in matchingArr:
-                warning += element + ", "
-            warning = warning[:-2]
-            self.alert = tk.Label(self, text=warning)
-            self.alert.pack()
-
-
-def refresh(label):
-    label.destroy()
 
 
 class App(tk.Tk):
@@ -116,9 +66,9 @@ class LandingPage(tk.Frame):
         user_list.pack()
         self.user_list = tk.Label()
 
-        testy = tk.Button(self, text="Testy boi",
-                          command=lambda: controller.google_vision("/images/download.jpg", requestRecognition))
-        testy.pack()
+        # testy = tk.Button(self, text="Testy boi",
+        #                   command=lambda: controller.google_vision("/images/download.jpg", googleVision.requestRecognition))
+        # testy.pack()
 
     def show_plist(self, context, controller):
         URL = "http://52.138.39.36:3000/plist"
@@ -128,15 +78,44 @@ class LandingPage(tk.Frame):
         resJson = response.json()
         userList = []
 
-        refresh(self.user_list)
+        renderingUtil.refresh(self.user_list)
         for element in resJson['message']:
             userList.append(element["p"])
         str1 = ""
         for element in userList:
-            str1 += element
+            str1 += element.lower()
             str1 += " "
         self.user_list = tk.Label(controller.frames[context], text='Here is your list: ' + str1)
         self.user_list.pack(padx=10, pady=10)
+
+
+class CommonDisplay:
+    def __init__(self, *args, **kwargs):
+        readImg = renderingUtil.resizeImage("/images/Capture.jpg")
+        self.img = ImageTk.PhotoImage(readImg)
+        self.alert = tk.Label()
+
+    def CheckIngredients(self, username):
+        # get the text from OCR
+        responseOCR = googleVision.requestOCR("/images/download.jpg")
+
+        # get user plist
+        userList = database.Get_Personal_List(username)
+
+        # get the matching array
+        matchingArr = googleVision.getMatchingArr(responseOCR, userList)
+
+        if not matchingArr:
+            self.alert = tk.Label(self, text="No harmful ingredients detected")
+            self.alert.pack()
+        else:
+            renderingUtil.refresh(self.alert)
+            warning = "We found the following matching ingredients that you might not want: \n "
+            for element in matchingArr:
+                warning += element + ", "
+            warning = warning[:-2]
+            self.alert = tk.Label(self, text=warning)
+            self.alert.pack()
 
 
 class RegularItems(tk.Frame, CommonDisplay):
@@ -149,7 +128,7 @@ class RegularItems(tk.Frame, CommonDisplay):
         label.pack(padx=10, pady=10)
 
         scan_items = tk.Button(self, text="Check Ingredients =>",
-                               command=lambda: self.checkIngredientsOCR(controller, "customer1"))
+                               command=lambda: self.CheckIngredients("customer1"))
         scan_items.pack()
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
@@ -172,7 +151,8 @@ class CustomItems(tk.Frame, CommonDisplay):
         label.config(font=('helvetica', 25))
         label.pack(padx=10, pady=10)
         scan_items = tk.Button(self, text="Check Ingredients",
-                               command=lambda: controller.google_vision("/images/sushi.bmp", requestRecognition))
+                               command=lambda: self.CheckIngredients("customer1"))
+
         scan_items.pack()
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
@@ -198,13 +178,13 @@ app = App()
 
 def loadProcessedImage(frame):
     # tell users to make google vision call
-    refresh(app.frames[frame].instruction)
+    renderingUtil.refresh(app.frames[frame].instruction)
     app.frames[frame].instruction = tk.Label(app.frames[frame], text="Your item is ready to be scanned")
     app.frames[frame].instruction.pack()
 
     # change the image
-    refresh(app.frames[frame].promptLabel)
-    readImg = resizeImage("/images/download.jpg")
+    renderingUtil.refresh(app.frames[frame].promptLabel)
+    readImg = renderingUtil.resizeImage("/images/download.jpg")
     app.frames[frame].img = ImageTk.PhotoImage(readImg)
     app.frames[frame].promptLabel = tk.Label(app.frames[frame], image=app.frames[frame].img)
     app.frames[frame].promptLabel.pack()

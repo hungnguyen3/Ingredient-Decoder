@@ -12,6 +12,7 @@ with open(workingDir + '/env.json') as f:
     data = json.load(f)
 
 key = data["api_key"]
+minScore = 0.8
 
 
 # function convert images into base64 and create req body for API call
@@ -46,12 +47,15 @@ def requestOCR(img_path):
 def requestRecognition(img_path):
     img_data = prepareRequest(img_path, 'LABEL_DETECTION', 10)
     result = requests.post(url,
-                             data=img_data,
-                             params={'key': key},
-                             headers={'Content-Type': 'application/json'})
-    response = [item.get('description') for item in result.json()["responses"][0]["labelAnnotations"]]
+                           data=img_data,
+                           params={'key': key},
+                           headers={'Content-Type': 'application/json'})
+    print(result.text)
+    result = [item.get('description')
+              for item in result.json()["responses"][0]["labelAnnotations"]
+              if item["score"] > minScore]
 
-    return response
+    return result
 
 
 def getMatchingArr(full_text, plist):
@@ -65,12 +69,10 @@ def getMatchingArr(full_text, plist):
 # make the request here
 
 def TestGround():
+    img_path = "/images/download.jpg"
+    result = requestRecognition(img_path)
 
-    img_path = workingDir + "/images/download.jpg"
-    # result = requestOCR(visionURL, key, imgpath)
-    # text = retrieveText(result)
-    # print(text)
-    #
+    print(result)
     # matchingArr = getMatchingArr(text, ["VeGetAble Oil", "SALT", "Joe", "mama"])
     # print(matchingArr)
     #
@@ -78,3 +80,6 @@ def TestGround():
     # print(result.text)
     # li = [item.get('description') for item in result.json()["responses"][0]["labelAnnotations"]]
     # print(li)
+
+
+TestGround()
