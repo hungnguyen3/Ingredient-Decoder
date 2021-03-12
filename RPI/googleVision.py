@@ -41,19 +41,15 @@ def requestRecognition(url, key, imgpath):
     print("hello from requestRecognition")
     return response
 
-def retrieveText(response):
-    return response.json()["responses"][0]["textAnnotations"][0]["description"].lower()
+def retrieveText(response, filter):
+    return response.json()["responses"][0][filter][0]["description"].lower()
 
 def getMatchingArr(fullText, plist):
     matchingArr = []
     for element in plist:
         if element.lower() in fullText:
-            matchingArr.append(element)
+            matchingArr.append(element.lower())
     return matchingArr
-# convert image only
-imgpath = workingDir + "/images/download.jpg"
-imgtest = prepareRequest(imgpath, 'TEXT_DETECTION', 1)
-#print(imgtest)
 
 # make the request here
 with open(workingDir + '/env.json') as f:
@@ -63,12 +59,20 @@ key = data["api_key"]
 imgpath = workingDir + "/images/download.jpg"
 visionURL = 'https://vision.googleapis.com/v1/images:annotate'
 
-result = requestOCR(visionURL, key, imgpath)
-text = retrieveText(result)
-print(text)
+# result = requestOCR(visionURL, key, imgpath)
+# text = retrieveText(result)
+# print(text)
+#
+# matchingArr = getMatchingArr(text, ["VeGetAble Oil", "SALT", "Joe", "mama"])
+# print(matchingArr)
 
-matchingArr = getMatchingArr(text, ["VeGetAble Oil", "SALT", "Joe", "mama"])
-print(matchingArr)
+result = requestRecognition(visionURL, key, imgpath)
+print(result.text)
+li = [item.get('description') for item in result.json()["responses"][0]["labelAnnotations"]]
+print(li)
+
+# matchingArr = getMatchingArr(text, ["VeGetAble Oil", "SALT", "Joe", "mama"])
+# print(matchingArr)
 #print(result.json())
 
 #result = requestRecognition(visionURL, key, imgpath)

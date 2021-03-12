@@ -30,13 +30,43 @@ class CommonDisplay:
         readImg = resizeImage("/images/Capture.jpg")
         self.img = ImageTk.PhotoImage(readImg)
 
+    def checkIngredientsOCR(self, controller, username):
+        # get the text from OCR
+        responseOCR = controller.google_vision("/images/download.jpg", requestOCR)
+        print("----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+        print(responseOCR.text)
+        print("----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+        fullText = retrieveText(responseOCR, "textAnnotations")
+        # get user plist
+        URL = "http://52.138.39.36:3000/plist"
+        PARAMS = {'username': username}
+        response = requests.post(url=URL, json=PARAMS)
+        resJson = response.json()
+        userList = []
+
+        for element in resJson['message']:
+            userList.append(element["p"])
+
+        # get the matching array
+        matchingArr = getMatchingArr(fullText, userList)
+        if(not matchingArr):
+           self.alert = tk.Label(self, text= "No harmful ingredients detected")
+           self.alert.pack()
+        else:
+           refresh(self.alert)
+           strin = "We found the following matching ingredients that you might not want: \n "
+           for element in matchingArr:
+               strin += element + ", "
+           strin = strin[:-2]
+           self.alert = tk.Label(self, text= strin)
+           self.alert.pack()
+
 def refresh(label):
     label.destroy()
 
 
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
-        print("uwu " + os.path.realpath(__file__))
         tk.Tk.__init__(self, *args, **kwargs)
         self.attributes('-fullscreen', True)
 
@@ -74,6 +104,7 @@ class App(tk.Tk):
         visionURL = 'https://vision.googleapis.com/v1/images:annotate'
 
         result = visionFunction(visionURL, key, imgpath)
+        return result
 
 
 class LandingPage(tk.Frame):
@@ -127,7 +158,7 @@ class RegularItems(tk.Frame, CommonDisplay):
         label.config(font=('helvetica', 25))
         label.pack(padx=10, pady=10)
 
-        scan_items = tk.Button(self, text="Check Ingredients =>", command=lambda: self.checkIngredientsORC(controller, "customer1"))
+        scan_items = tk.Button(self, text="Check Ingredients =>", command=lambda: self.checkIngredientsOCR(controller, "customer1"))
         scan_items.pack()
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
@@ -138,29 +169,9 @@ class RegularItems(tk.Frame, CommonDisplay):
         self.promptLabel = tk.Label(self, image=self.img)
         self.promptLabel.pack()
 
-    def checkIngredientsORC(self, controller, username):
-        # get the text from OCR
-        responseORC = controller.google_vision("/images/download.jpg", requestOCR)
-        fullText = retrieveText(responseORC)
-        print(fullText)
-        # get user plist
-        #URL = "http://52.138.39.36:3000/plist"
-        #PARAMS = {'username': username}
-        #response = requests.post(url=URL, json=PARAMS)
-        #resJson = response.json()
-        #userList = []
+        self.alert = tk.Label(self, text= "")
 
-        #refresh(self.user_list)
-        #for element in resJson['message']:
-        #    userList.append(element["p"])
-        # get the matching array
-        #matchingArr = getMatchingArr(fullText, userList)
-        #if(not matchingArr):
-        #    self.alert = tk.Label(self, text= "No harmful ingredients detected")
-        #    self.alert.pack()
-        #else:
-        #    self.alert = tk.Label(self, text= "List of harmful ingredients found: " + matchingArr)
-        #    self.alert.pack()
+
 
 class CustomItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
@@ -170,7 +181,7 @@ class CustomItems(tk.Frame, CommonDisplay):
         label = tk.Label(self, text="Scan store custom items here")
         label.config(font=('helvetica', 25))
         label.pack(padx=10, pady=10)
-        scan_items = tk.Button(self, text="Check Ingredients")
+        scan_items = tk.Button(self, text="Check Ingredients", command=lambda: controller.google_vision("/images/sushi.bmp", requestRecognition))
         scan_items.pack()
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
@@ -184,7 +195,6 @@ class CustomItems(tk.Frame, CommonDisplay):
 
 class MainMenu:
     def __init__(self, master):
-        print("hello")
         menubar = tk.Menu(master)
         filemenu = tk.Menu(menubar, tearoff=0)
         filemenu.add_command(label="Exit", command=master.quit)
@@ -211,7 +221,6 @@ def loadProcessedImage(frame):
 def pollPicture():
     app.after(1000, pollPicture)
     pictureExists, img = interface.takeImage(workingDir)
-    print(pictureExists, img)
     if pictureExists:
         # change the image for regular items
         loadProcessedImage(RegularItems)
