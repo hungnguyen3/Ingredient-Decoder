@@ -95,27 +95,50 @@ class CommonDisplay:
         self.img = ImageTk.PhotoImage(readImg)
         self.alert = tk.Label()
 
-    def CheckIngredients(self, username):
-        # get the text from OCR
-        responseOCR = googleVision.requestOCR("/images/download.jpg")
-
-        # get user plist
-        userList = database.Get_Personal_List(username)
-
-        # get the matching array
-        matchingArr = googleVision.getMatchingArr(responseOCR, userList)
-
+    def printIntersection(self, warning, matchingArr):
         if not matchingArr:
             self.alert = tk.Label(self, text="No harmful ingredients detected")
             self.alert.pack()
         else:
             renderingUtil.refresh(self.alert)
-            warning = "We found the following matching ingredients that you might not want: \n "
+            warning = "We found the following " + warning + " that you might not want: \n "
             for element in matchingArr:
                 warning += element + ", "
             warning = warning[:-2]
             self.alert = tk.Label(self, text=warning)
             self.alert.pack()
+
+    def CheckIngredientsOCR(self, username):
+        # get the text from OCR
+        responseOCR = googleVision.requestOCR("/images/download.jpg")
+        # get user plist
+        userList = database.Get_Personal_List(username)
+        # get the matching array
+        matchingArr = googleVision.getMatchingArr(responseOCR, userList)
+        self.printIntersection("ingredients matching your personal list", matchingArr)
+
+    def CheckIngredientsRecognition(self, username):
+        # get the text from OCR
+        responseRec = googleVision.requestRecognition("/images/download.jpg")
+        responseRec = database.Get_Custom_Ingredients(responseRec)
+        # get user plist
+        userList = database.Get_Personal_List(username)
+        # get the matching array
+        matchingArr = googleVision.getMatchingArr(responseRec, userList)
+        self.printIntersection("ingredients matching your personal list", matchingArr)
+
+    def CheckHarmfulOCR(self):
+        responseOCR = googleVision.requestOCR("/images/download.jpg")
+        harmfulList = database.Get_Harmful_List()
+        matchingArr = googleVision.getMatchingArr(responseOCR, harmfulList)
+        self.printIntersection("generally harmful ingredients", matchingArr)
+
+    def CheckHarmfulRecognition(self):
+        responseRec = googleVision.requestRecognition("/images/download.jpg")
+        responseRec = database.Get_Custom_Ingredients(responseRec)
+        harmfulList = database.Get_Harmful_List()
+        matchingArr = googleVision.getMatchingArr(responseRec, harmfulList)
+        self.printIntersection("generally harmful ingredients", matchingArr)
 
 
 class RegularItems(tk.Frame, CommonDisplay):
@@ -128,7 +151,7 @@ class RegularItems(tk.Frame, CommonDisplay):
         label.pack(padx=10, pady=10)
 
         scan_items = tk.Button(self, text="Check Ingredients =>",
-                               command=lambda: self.CheckIngredients("customer1"))
+                               command=lambda: self.CheckIngredientsOCR("customer1"))
         scan_items.pack()
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
@@ -151,7 +174,7 @@ class CustomItems(tk.Frame, CommonDisplay):
         label.config(font=('helvetica', 25))
         label.pack(padx=10, pady=10)
         scan_items = tk.Button(self, text="Check Ingredients",
-                               command=lambda: self.CheckIngredients("customer1"))
+                               command=lambda: self.CheckIngredientsOCR("customer1"))
 
         scan_items.pack()
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))

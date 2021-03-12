@@ -1,4 +1,5 @@
 import requests
+import list
 
 pListUrl = "http://52.138.39.36:3000/plist"
 customIngredientsUrl = "http://52.138.39.36:3000/plist"
@@ -11,8 +12,8 @@ def Get_Personal_List(username):
     userList = []
 
     print(resJson)
-    # for element in resJson['message']:
-    #     userList.append(element["p"])
+    for element in resJson['message']:
+        userList.append(element["p"])
 
     return userList
 
@@ -34,10 +35,13 @@ def Get_Custom_Ingredients(item_list):
 
     return ingredientsList
 
+def Get_Harmful_List():
+    return list.list
+
 
 def TestyBoi():
-    BogusList = Get_Custom_Ingredients(['Newspaper', 'Plant', 'Font', 'Material property'])
-    print(BogusList)
+    # BogusList = Get_Custom_Ingredients(['Newspaper', 'Plant', 'Font', 'Material property'])
+    print(Get_Harmful_List())
 
 
-TestyBoi()
+# TestyBoi()
