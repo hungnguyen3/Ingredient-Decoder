@@ -7,11 +7,12 @@ import math
 import interface
 
 # import functions and classes
-from googleVision import requestRecognition, requestOCR, retrieveText, getMatchingArr
+import googleVision
 
 # current working directory
 workingDir = os.path.dirname(os.path.abspath(__file__))
 backgroundColour = "#263D42"
+
 
 def resizeImage(relativePath):
     readImg = Image.open(workingDir + relativePath)
@@ -25,6 +26,7 @@ def resizeImage(relativePath):
     readImg = readImg.resize((width, height), Image.ANTIALIAS)
     return readImg
 
+
 class CommonDisplay:
     def __init__(self, *args, **kwargs):
         readImg = resizeImage("/images/Capture.jpg")
@@ -32,11 +34,8 @@ class CommonDisplay:
 
     def checkIngredientsOCR(self, controller, username):
         # get the text from OCR
-        responseOCR = controller.google_vision("/images/download.jpg", requestOCR)
-        print("----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
-        print(responseOCR.text)
-        print("----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
-        fullText = retrieveText(responseOCR, "textAnnotations")
+        responseOCR = googleVision.requestOCR("/images/download.jpg")
+
         # get user plist
         URL = "http://52.138.39.36:3000/plist"
         PARAMS = {'username': username}
@@ -48,18 +47,19 @@ class CommonDisplay:
             userList.append(element["p"])
 
         # get the matching array
-        matchingArr = getMatchingArr(fullText, userList)
-        if(not matchingArr):
-           self.alert = tk.Label(self, text= "No harmful ingredients detected")
-           self.alert.pack()
+        matchingArr = googleVision.getMatchingArr(responseOCR, userList)
+        if not matchingArr:
+            self.alert = tk.Label(self, text="No harmful ingredients detected")
+            self.alert.pack()
         else:
-           refresh(self.alert)
-           strin = "We found the following matching ingredients that you might not want: \n "
-           for element in matchingArr:
-               strin += element + ", "
-           strin = strin[:-2]
-           self.alert = tk.Label(self, text= strin)
-           self.alert.pack()
+            refresh(self.alert)
+            warning = "We found the following matching ingredients that you might not want: \n "
+            for element in matchingArr:
+                warning += element + ", "
+            warning = warning[:-2]
+            self.alert = tk.Label(self, text=warning)
+            self.alert.pack()
+
 
 def refresh(label):
     label.destroy()
@@ -95,16 +95,6 @@ class App(tk.Tk):
     def show_frame(self, context):
         frame = self.frames[context]
         frame.tkraise()
-
-    def google_vision(self, relativeImgPath, visionFunction):
-        with open(workingDir + '/env.json') as f:
-            data = json.load(f)
-        key = data["api_key"]
-        imgpath = workingDir + relativeImgPath
-        visionURL = 'https://vision.googleapis.com/v1/images:annotate'
-
-        result = visionFunction(visionURL, key, imgpath)
-        return result
 
 
 class LandingPage(tk.Frame):
@@ -158,7 +148,8 @@ class RegularItems(tk.Frame, CommonDisplay):
         label.config(font=('helvetica', 25))
         label.pack(padx=10, pady=10)
 
-        scan_items = tk.Button(self, text="Check Ingredients =>", command=lambda: self.checkIngredientsOCR(controller, "customer1"))
+        scan_items = tk.Button(self, text="Check Ingredients =>",
+                               command=lambda: self.checkIngredientsOCR(controller, "customer1"))
         scan_items.pack()
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
@@ -169,8 +160,7 @@ class RegularItems(tk.Frame, CommonDisplay):
         self.promptLabel = tk.Label(self, image=self.img)
         self.promptLabel.pack()
 
-        self.alert = tk.Label(self, text= "")
-
+        self.alert = tk.Label(self, text="")
 
 
 class CustomItems(tk.Frame, CommonDisplay):
@@ -181,7 +171,8 @@ class CustomItems(tk.Frame, CommonDisplay):
         label = tk.Label(self, text="Scan store custom items here")
         label.config(font=('helvetica', 25))
         label.pack(padx=10, pady=10)
-        scan_items = tk.Button(self, text="Check Ingredients", command=lambda: controller.google_vision("/images/sushi.bmp", requestRecognition))
+        scan_items = tk.Button(self, text="Check Ingredients",
+                               command=lambda: controller.google_vision("/images/sushi.bmp", requestRecognition))
         scan_items.pack()
         start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
@@ -203,6 +194,7 @@ class MainMenu:
 
 
 app = App()
+
 
 def loadProcessedImage(frame):
     # tell users to make google vision call
@@ -228,6 +220,7 @@ def pollPicture():
         # change the image for custom items
         loadProcessedImage(CustomItems)
 
-app.after(3000,pollPicture())
+
+app.after(3000, pollPicture())
 
 app.mainloop()
