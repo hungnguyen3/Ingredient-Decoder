@@ -28,7 +28,6 @@ def Get_Custom_Ingredients(item_list):
         errorTwo = {'message': None}
         if resJson != errorOne and resJson != errorTwo:
             ingredientsList += resJson
-        print(resJson == errorTwo)
 
     # for element in resJson['message']:
     #     userList.append(element["p"])

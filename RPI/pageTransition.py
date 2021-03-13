@@ -1,5 +1,6 @@
 import json
 import tkinter as tk
+import tkinter.ttk as ttk
 import requests
 from PIL import ImageTk, Image
 import os
@@ -13,6 +14,8 @@ import googleVision
 # current working directory
 workingDir = os.path.dirname(os.path.abspath(__file__))
 backgroundColour = "#263D42"
+
+style = ttk.Style()
 
 
 class App(tk.Tk):
@@ -55,7 +58,9 @@ class LandingPage(tk.Frame):
         label.config(font=('helvetica', 25))
         label.pack(padx=10, pady=10)
 
-        regular_page = tk.Button(self, text="Regular Items", command=lambda: controller.show_frame(RegularItems))
+        style.configure("reg_page_style.TButton", font='Calibri')
+        regular_page = ttk.Button(self, text="Regular Items", command=lambda: controller.show_frame(RegularItems),
+                                  style="reg_page_style.TButton")
         regular_page.pack()
 
         custom_page = tk.Button(self, text="Custom Items", command=lambda: controller.show_frame(CustomItems))
@@ -91,8 +96,9 @@ class LandingPage(tk.Frame):
 
 class CommonDisplay:
     def __init__(self, *args, **kwargs):
-        readImg = renderingUtil.resizeImage("/images/Capture.jpg")
-        self.img = ImageTk.PhotoImage(readImg)
+        self.readImg = Image.open(workingDir+"/images/Capture.jpg")
+        self.img = ImageTk.PhotoImage(self.readImg)
+        print(self.img)
         self.alert = tk.Label()
 
     def printIntersection(self, warning, matchingArr):
@@ -159,6 +165,7 @@ class RegularItems(tk.Frame, CommonDisplay):
         self.instruction = tk.Label(self, text="Place item inside box with ingredients list facing camera")
         self.instruction.pack()
 
+        print(self.img)
         self.promptLabel = tk.Label(self, image=self.img)
         self.promptLabel.pack()
 

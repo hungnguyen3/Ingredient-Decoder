@@ -12,5 +12,3 @@ def encode_image(image):
 imgpath = workingDir + "/images/sushi.bmp"
 with open(imgpath, 'rb') as f_img:
     result = encode_image(f_img)
-
-print(result)

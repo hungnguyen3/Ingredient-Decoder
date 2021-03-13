@@ -50,7 +50,6 @@ def requestRecognition(img_path):
                            data=img_data,
                            params={'key': key},
                            headers={'Content-Type': 'application/json'})
-    print(result.text)
     result = [item.get('description')
               for item in result.json()["responses"][0]["labelAnnotations"]
               if item["score"] > minScore]
