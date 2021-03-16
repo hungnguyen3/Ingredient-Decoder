@@ -88,9 +88,7 @@ public class pListActivity extends AppCompatActivity {
                 JSONObject postData = new JSONObject();
                 try {
                     postData.put("username", username);
-                    JSONObject newp = new JSONObject();
-                    newp.put("p", newi);
-                    postData.put("plist_add", newp);
+                    postData.put("plist_add", newi);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
