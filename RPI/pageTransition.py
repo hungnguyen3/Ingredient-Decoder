@@ -129,6 +129,10 @@ class CommonDisplay:
             self.alert = tk.Label(self, text="No ingredients text detected")
             self.alert.pack()
             return
+        if matchingArr == "notRecognition":
+            self.alert = tk.Label(self, text="Not recognized as a store custom item. Maybe try regular item instead?")
+            self.alert.pack()
+            return
         if not matchingArr:
             self.alert = tk.Label(self, text="No harmful ingredients detected")
             self.alert.pack()
