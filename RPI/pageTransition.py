@@ -17,7 +17,7 @@ backgroundColour = "#263D42"
 pictureExists = False
 newPicture = False
 acceptNextImage = True
-objectImg = "/images/sushiOut.bmp"
+objectImg = None
 buffer = None
 
 
@@ -96,12 +96,35 @@ class LandingPage(tk.Frame):
 
 
 class CommonDisplay:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, controller, parent, message, scanFunction, *args, **kwargs):
         readImg = renderingUtil.resizeImage("/images/Capture.jpg")
         self.img = ImageTk.PhotoImage(readImg)
         self.alert = tk.Label()
 
+        # CommonDisplay.__init__(self)
+
+        label = tk.Label(self, text=message)
+        label.config(font=('helvetica', 25))
+        label.pack(padx=10, pady=10)
+        scan_items = tk.Button(self, text="Check Ingredients",
+                               command=lambda: scanFunction("customer1"))
+
+        scan_items.pack()
+        start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
+        start_page.pack()
+
+        self.instruction = tk.Label(self, text="Place item inside box with ingredients list facing camera")
+        self.instruction.pack()
+
+        self.promptLabel = tk.Label(self, image=self.img)
+        self.promptLabel.pack()
+
+        self.checkNewItem = tk.Button(self, text="CLick here to check another item",
+                                      command=lambda: self.MakeAcceptNextImage())
+        self.checkNewItem.pack()
+
     def printIntersection(self, warning, matchingArr):
+        renderingUtil.refresh(self.alert)
         if matchingArr == "notOCR":
             self.alert = tk.Label(self, text="No ingredients text detected")
             self.alert.pack()
@@ -110,7 +133,6 @@ class CommonDisplay:
             self.alert = tk.Label(self, text="No harmful ingredients detected")
             self.alert.pack()
         else:
-            renderingUtil.refresh(self.alert)
             warning = "We found the following " + warning + " that you might not want: \n "
             for element in matchingArr:
                 warning += element + ", "
@@ -119,20 +141,21 @@ class CommonDisplay:
             self.alert.pack()
 
     def CheckIngredientsOCR(self, username):
+        if self.noImg():
+            return
         # get the text from OCR
-        responseOCR = googleVision.requestOCR("/images/sushiOut.bmp")
+        responseOCR = googleVision.requestOCR(objectImg)
         # get user plist
         userList = database.Get_Personal_List(username)
         # get the matching array
-        print("--------------------------------------------------------------------------------")
-        print(responseOCR)
-        print("--------------------------------------------------------------------------------")
         matchingArr = googleVision.getMatchingArr(responseOCR, userList)
         self.printIntersection("ingredients matching your personal list", matchingArr)
 
     def CheckIngredientsRecognition(self, username):
+        if self.noImg():
+            return
         # get the text from OCR
-        responseRec = googleVision.requestRecognition("/images/sushiOut.bmp")
+        responseRec = googleVision.requestRecognition(objectImg)
         responseRec = database.Get_Custom_Ingredients(responseRec)
         # get user plist
         userList = database.Get_Personal_List(username)
@@ -141,69 +164,44 @@ class CommonDisplay:
         self.printIntersection("ingredients matching your personal list", matchingArr)
 
     def CheckHarmfulOCR(self):
-        responseOCR = googleVision.requestOCR("/images/sushiOut.bmp")
+        if self.noImg():
+            return
+        responseOCR = googleVision.requestOCR(objectImg)
         harmfulList = database.Get_Harmful_List()
         matchingArr = googleVision.getMatchingArr(responseOCR, harmfulList)
         self.printIntersection("generally harmful ingredients", matchingArr)
 
     def CheckHarmfulRecognition(self):
-        responseRec = googleVision.requestRecognition("/images/sushiOut.bmp")
+        if self.noImg():
+            return
+        responseRec = googleVision.requestRecognition(objectImg)
         responseRec = database.Get_Custom_Ingredients(responseRec)
         harmfulList = database.Get_Harmful_List()
         matchingArr = googleVision.getMatchingArr(responseRec, harmfulList)
         self.printIntersection("generally harmful ingredients", matchingArr)
 
-    def acceptNextImage(self):
+    def MakeAcceptNextImage(self):
         global acceptNextImage
         acceptNextImage = True
+
+    def noImg(self):
+        if objectImg is None:
+            self.alert = tk.Label(self, text="No object detected, or image has not loaded yet. \n PLease wait for image of object to show up before attempting scan")
+            self.alert.pack()
+            return True
+        return False
 
 
 class RegularItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        CommonDisplay.__init__(self)
-
-        label = tk.Label(self, text="Scan regular items here")
-        label.config(font=('helvetica', 25))
-        label.pack(padx=10, pady=10)
-
-        scan_items = tk.Button(self, text="Check Ingredients =>",
-                               command=lambda: self.CheckIngredientsOCR("customer1"))
-        scan_items.pack()
-        start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
-        start_page.pack()
-
-        self.instruction = tk.Label(self, text="Place item inside box with ingredients list facing camera")
-        self.instruction.pack()
-
-        self.promptLabel = tk.Label(self, image=self.img)
-        self.promptLabel.pack()
-
-        self.alert = tk.Label(self, text="")
+        CommonDisplay.__init__(self, message="Scan regular items here", scanFunction=self.CheckIngredientsOCR, parent=parent, controller=controller)
 
 
 class CustomItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        CommonDisplay.__init__(self)
-
-        label = tk.Label(self, text="Scan store custom items here")
-        label.config(font=('helvetica', 25))
-        label.pack(padx=10, pady=10)
-        scan_items = tk.Button(self, text="Check Ingredients",
-                               command=lambda: self.CheckIngredientsRecognition("customer1"))
-
-        scan_items.pack()
-        start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
-        start_page.pack()
-
-        self.instruction = tk.Label(self, text="Place item inside box with ingredients list facing camera")
-        self.instruction.pack()
-
-        self.promptLabel = tk.Label(self, image=self.img)
-        self.promptLabel.pack()
-
-        checkNewItem = tk.Button(self, text="CLick here to check another item", command=lambda: acceptNextImage())
+        CommonDisplay.__init__(self, message="Scan store custom items here", scanFunction=self.CheckIngredientsRecognition, parent=parent, controller=controller)
 
 
 class MainMenu:
@@ -241,13 +239,14 @@ def pollPicture():
     global buffer
     global acceptNextImage
     global objectImg
-    pictureExists, img, newPicture = interface.takeImage("/images/sushiOut.bmp")  # sets newPicture to false after first call
+    pictureExists, img, newPicture = interface.takeImage()  # sets newPicture to false after first call
 
     if pictureExists and newPicture:
         buffer = img
 
         if acceptNextImage:
             objectImg = buffer
+            print(objectImg)
             loadProcessedImage(RegularItems)
             loadProcessedImage(CustomItems)
             acceptNextImage = False

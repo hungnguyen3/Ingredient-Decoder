@@ -11,7 +11,6 @@ def Get_Personal_List(username):
     resJson = response.json()
     userList = []
 
-    print(resJson)
     for element in resJson['message']:
         userList.append(element["p"])
 
@@ -28,7 +27,6 @@ def Get_Custom_Ingredients(item_list):
         errorTwo = {'message': None}
         if resJson != errorOne and resJson != errorTwo:
             ingredientsList += resJson
-        print(resJson == errorTwo)
 
     # for element in resJson['message']:
     #     userList.append(element["p"])

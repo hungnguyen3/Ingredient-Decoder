@@ -43,7 +43,6 @@ def requestOCR(img_path):
         response = response.json()["responses"][0]["textAnnotations"][0]["description"].lower()
         return response
     except KeyError:
-        print("Error uwu")
         return "notOCR"
 
 
@@ -55,7 +54,6 @@ def requestRecognition(img_path):
                            data=img_data,
                            params={'key': key},
                            headers={'Content-Type': 'application/json'})
-    print(result.text)
     result = [item.get('description')
               for item in result.json()["responses"][0]["labelAnnotations"]
               if item["score"] > minScore]
@@ -65,7 +63,6 @@ def requestRecognition(img_path):
 
 def getMatchingArr(full_text, plist):
     matchingArr = []
-    print(full_text)
     if full_text == "notOCR":
         return "notOCR"
     for element in plist:

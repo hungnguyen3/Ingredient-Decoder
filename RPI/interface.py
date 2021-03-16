@@ -2,7 +2,7 @@ import time
 import random
 
 
-def takeImage(img):
-    if random.randint(0, 99) < 10:
-        return True, (img), True
+def takeImage():
+    if random.randint(0, 99) < 50:
+        return True, "/images/download.jpg", True
     return False, "false", False
