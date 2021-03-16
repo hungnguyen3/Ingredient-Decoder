@@ -7,8 +7,6 @@ if ser.isOpen == False:
     ser.open()
 try:
     while True:
-        #ser.write(b"0")
-        #ser.flushInput()
         size = ser.inWaiting()
         if size != 0:
             print("here")
