@@ -230,6 +230,11 @@ int TestForReceivedData(volatile unsigned char *  LineStatusReg) {
 }
 
 // main for bluetooth
+// list of AT commands to configure the bluetooth component:
+// AT+ROLE=0 		set as slave
+// AT+CMODE=1		pair with many devices
+// AT+ADDR?			get the address of the RFS board 
+// AT+INQ			get nearby devices' addresses
 //int main(void) {
 //	Init_BT();
 //	BTFactoryReset();
