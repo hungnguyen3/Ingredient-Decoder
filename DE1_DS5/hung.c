@@ -186,8 +186,10 @@ void Init_BT(void) {
 	line_control_register = line_control_register |  0x80;
 	*Bluetooth_LineControlReg= line_control_register;
 	// set Divisor latch (LSB and MSB) with correct value for required baud rate
-	*Bluetooth_DivisorLatchLSB =0x51;
-	*Bluetooth_DivisorLatchMSB =0x00;
+	int divisor = (int) ((50E6)/(112500 *16));
+	*Bluetooth_DivisorLatchLSB = divisor & 0xff;
+	*Bluetooth_DivisorLatchMSB = (divisor >> 8) & 0xff;
+
 	// set bit 7 of Line control register back to 0 and
 	// program other bits in that reg for 8 bit data,
 	// 1 stop bit, no parity etc
@@ -235,39 +237,52 @@ int TestForReceivedData(volatile unsigned char *  LineStatusReg) {
 // AT+CMODE=1		pair with many devices
 // AT+ADDR?			get the address of the RFS board 
 // AT+INQ			get nearby devices' addresses
-//int main(void) {
-//	Init_BT();
-//	BTFactoryReset();
-//	return 0;
-//}
-
-//main for RS232 read
 int main(void) {
-	Init_RS232();
+	Init_BT();
+	//BTFactoryReset();
 	while(1){
-		while(RS232TestForReceivedData() != 1);
-		int distance = getcharRS232();
-		printf("received:%d\n", distance);
-		unsigned char value = distance;
-		unsigned char first;
-		unsigned char second;
-		unsigned char third;
-		first = value%10;
-		value = value/10;
-		second = value%10;
-		value = value/10;
-		third = value%10;
-		*HEX0_1 = first;
-		*HEX2_3 = second;
-		*HEX4_5 = third;
-		if(distance < 20){
-			*LEDS = 1023;
-		}
-		else{
-			*LEDS =0;
+		if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
+			int c = getcharBT(Bluetooth_LineStatusReg , Bluetooth_ReceiverFifo);
+			printf("received %d from the Bluetooth \n", c);
+			if(c == 50){
+				break;
+			}
 		}
 	}
+	for(int i = 0; i < 255; i++){
+		delay(100);
+		printf("trasmit %d to the Bluetooth \n", i);
+		putcharBT(i, Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
+	}
 }
+
+//main for RS232 read
+// int main(void) {
+// 	Init_RS232();
+// 	while(1){
+// 		while(RS232TestForReceivedData() != 1);
+// 		int distance = getcharRS232();
+// 		printf("received:%d\n", distance);
+// 		unsigned char value = distance;
+// 		unsigned char first;
+// 		unsigned char second;
+// 		unsigned char third;
+// 		first = value%10;
+// 		value = value/10;
+// 		second = value%10;
+// 		value = value/10;
+// 		third = value%10;
+// 		*HEX0_1 = first;
+// 		*HEX2_3 = second;
+// 		*HEX4_5 = third;
+// 		if(distance < 20){
+// 			*LEDS = 1023;
+// 		}
+// 		else{
+// 			*LEDS =0;
+// 		}
+// 	}
+// }
 
 // main for RS232 write
 //void main(){
