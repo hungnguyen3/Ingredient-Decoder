@@ -68,7 +68,7 @@ def getMatchingArr(full_text, plist):
     if full_text == "notRecognition":
         return "notRecognition"
     for element in plist:
-        if element.lower() in full_text:
+        if element.lower() in full_text and (element.lower() not in matchingArr):
             matchingArr.append(element.lower())
     return matchingArr
 

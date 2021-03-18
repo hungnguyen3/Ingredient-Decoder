@@ -25,8 +25,8 @@ GPIO.setup(GPIO_ECHO, GPIO.IN)
 
 cap = cv2.VideoCapture(0)
 
-cap.set(3,640)
-cap.set(4,480)
+cap.set(3,1920)
+cap.set(4,1080)
 
 ret, frame = cap.read()
 rows, cols, channels = frame.shape
@@ -77,7 +77,6 @@ def waitForItem():
             print(dist)
             time.sleep(5)
             takeImage()
-            break
         else:
             print(dist)
 
