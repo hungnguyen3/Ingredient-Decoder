@@ -232,57 +232,98 @@ int TestForReceivedData(volatile unsigned char *  LineStatusReg) {
 }
 
 // main for bluetooth
-// list of AT commands to configure the bluetooth component:
-// AT+ROLE=0 		set as slave
-// AT+CMODE=1		pair with many devices
-// AT+ADDR?			get the address of the RFS board 
-// AT+INQ			get nearby devices' addresses
 int main(void) {
 	Init_BT();
-	//BTFactoryReset();
+	Init_RS232();
+	//	BTFactoryReset();
+
+	int usernameCounter = 0;
+	int username[100];
+	// waiting for sign in from the user
 	while(1){
 		if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
 			int c = getcharBT(Bluetooth_LineStatusReg , Bluetooth_ReceiverFifo);
 			printf("received %d from the Bluetooth \n", c);
-			if(c == 50){
+			username[usernameCounter] = c;
+			if(c == 50 || c == 49){ //customer1 and customer2
 				break;
 			}
+			usernameCounter ++;
 		}
 	}
-	for(int i = 0; i < 255; i++){
-		delay(100);
-		printf("trasmit %d to the Bluetooth \n", i);
-		putcharBT(i, Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
+
+	// send username to Raspberry Pi
+	for(int i = 0; i <= usernameCounter; i++){
+		printf("send rs232 to RPI:%d\n", username[i]);
+		putcharRS232(username[i]);
+	}
+
+	int logout = 0;
+	// Sonar sensor
+	while(1){
+		while(RS232TestForReceivedData() != 1);
+		int distance = getcharRS232();
+		printf("sonar received:%d\n", distance);
+		unsigned char value = distance;
+		unsigned char first;
+		unsigned char second;
+		unsigned char third;
+		first = value%10;
+		value = value/10;
+		second = value%10;
+		value = value/10;
+		third = value%10;
+		*HEX0_1 = first;
+		*HEX2_3 = second;
+		*HEX4_5 = third;
+		if(distance < 20){
+			*LEDS = 1023;
+		}else{
+			*LEDS =0;
+		}
+
+		// logout logic
+		if(logout == 5){
+			break;
+		}else if(distance == 200){
+			logout++;
+		}
 	}
 }
 
-//main for RS232 read
-// int main(void) {
-// 	Init_RS232();
-// 	while(1){
-// 		while(RS232TestForReceivedData() != 1);
-// 		int distance = getcharRS232();
-// 		printf("received:%d\n", distance);
-// 		unsigned char value = distance;
-// 		unsigned char first;
-// 		unsigned char second;
-// 		unsigned char third;
-// 		first = value%10;
-// 		value = value/10;
-// 		second = value%10;
-// 		value = value/10;
-// 		third = value%10;
-// 		*HEX0_1 = first;
-// 		*HEX2_3 = second;
-// 		*HEX4_5 = third;
-// 		if(distance < 20){
-// 			*LEDS = 1023;
-// 		}
-// 		else{
-// 			*LEDS =0;
-// 		}
-// 	}
-// }
+//for(int i = 0; i < 255; i++){
+//	delay(100);
+//	printf("trasmit %d to the Bluetooth \n", i);
+//	putcharBT(i, Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
+//}
+//
+////main for RS232 read
+//int main(void) {
+//	Init_RS232();
+//	while(1){
+//		while(RS232TestForReceivedData() != 1);
+//		int distance = getcharRS232();
+//		printf("received:%d\n", distance);
+//		unsigned char value = distance;
+//		unsigned char first;
+//		unsigned char second;
+//		unsigned char third;
+//		first = value%10;
+//		value = value/10;
+//		second = value%10;
+//		value = value/10;
+//		third = value%10;
+//		*HEX0_1 = first;
+//		*HEX2_3 = second;
+//		*HEX4_5 = third;
+//		if(distance < 20){
+//			*LEDS = 1023;
+//		}
+//		else{
+//			*LEDS =0;
+//		}
+//	}
+//}
 
 // main for RS232 write
 //void main(){
