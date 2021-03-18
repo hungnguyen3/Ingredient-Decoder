@@ -17,9 +17,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
+import java.util.UUID;
 
 public class MenuCActivity extends AppCompatActivity {
-
+    static final UUID mUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,64 +57,51 @@ public class MenuCActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+
         bluetooth.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
+                System.out.println(btAdapter.getBondedDevices());
+                BluetoothDevice btDevice = btAdapter.getRemoteDevice("20:18:11:21:21:00");
+                System.out.println(btDevice.getName());
+                BluetoothSocket btSocket = null;
+                int c = 0;
+                do{
+                    try {
+                        btSocket = btDevice.createRfcommSocketToServiceRecord(mUUID);
+                        System.out.println(btSocket);
+                        btSocket.connect();
+                        System.out.println(btSocket.isConnected());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    c++;
+                }
+                while (!btSocket.isConnected() && c < 3);
+
                 try {
-                    bt(username);
+                    OutputStream outputStream = btSocket.getOutputStream();
+                    outputStream.write(username.getBytes());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
 
+                try {
+                    btSocket.close();
+                    System.out.println(btSocket.isConnected());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                nametext.setText(username + " Bluetooth sign in finished");
             }
         });
 
 
 
     }
-    private OutputStream outputStream;
-    private InputStream inStream;
 
-    private void bt(String s) throws IOException {
-        BluetoothAdapter blueAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (blueAdapter != null) {
-            if (blueAdapter.isEnabled()) {
-                Set<BluetoothDevice> bondedDevices = blueAdapter.getBondedDevices();
-                if(bondedDevices.size() > 0) {
-                    Object[] devices = (Object []) bondedDevices.toArray();
-                    System.out.println(devices);
-                    BluetoothDevice device = (BluetoothDevice) devices[0];
-                    ParcelUuid[] uuids = device.getUuids();
-                    BluetoothSocket socket = device.createRfcommSocketToServiceRecord(uuids[0].getUuid());
-                    socket.connect();
-                    outputStream = socket.getOutputStream();
-                    inStream = socket.getInputStream();
-                    outputStream.write(s.getBytes());
-                    run();
-                }
-                Toast.makeText(MenuCActivity.this, "No appropriate paired devices",
-                        Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(MenuCActivity.this, "Bluetooth is disabled",
-                        Toast.LENGTH_LONG).show();
-            }
-        }
-    }
-
-
-    public void run() {
-        final int BUFFER_SIZE = 1024;
-        byte[] buffer = new byte[BUFFER_SIZE];
-        int bytes = 0;
-        int b = BUFFER_SIZE;
-
-        while (true) {
-            try {
-                bytes = inStream.read(buffer, bytes, BUFFER_SIZE - bytes);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 }
