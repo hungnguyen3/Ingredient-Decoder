@@ -30,7 +30,7 @@ cap.set(4,1080)
 
 ret, frame = cap.read()
 rows, cols, channels = frame.shape
-print(cols, rows, channels)
+#print(cols, rows, channels)
 
 def takeImage():
     ret,frame = cap.read()
@@ -80,6 +80,16 @@ def waitForItem():
         else:
             print(dist)
 
+def bluetoothLogin():
+    username = []
+    while(1):
+        size = ser.inWaiting()
+        if size != 0:
+            response = ser.read(1)
+            username.append(response)
+            print(response)
+
+bluetoothLogin()
 waitForItem()
 cap.release()
 cv2.destroyAllWindows()
