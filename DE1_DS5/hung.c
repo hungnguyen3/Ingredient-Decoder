@@ -2,6 +2,8 @@
 #include <time.h>
 #include <math.h>
 
+#define simpleBox (volatile int *) 0xFF202080
+
 #define SWITCHES    (volatile unsigned int *)(0xFF200000)
 #define PUSHBUTTONS (volatile unsigned int *)(0xFF200010)
 
@@ -237,100 +239,91 @@ int main(void) {
 	Init_RS232();
 	//	BTFactoryReset();
 
-	int usernameCounter = 0;
-	int username[100];
-	// waiting for sign in from the user
+//	int usernameCounter = 0;
+//	int username[100];
+//	// waiting for sign in from the user
+//	while(1){
+//		if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
+//			int c = getcharBT(Bluetooth_LineStatusReg , Bluetooth_ReceiverFifo);
+//			printf("received %d from the Bluetooth \n", c);
+//			username[usernameCounter] = c;
+//			if(c == 50 || c == 49){ //customer1 and customer2
+//				break;
+//			}
+//			usernameCounter ++;
+//		}
+//	}
+//
+//	// send username to Raspberry Pi
+//	for(int i = 0; i <= usernameCounter; i++){
+//		printf("send rs232 to RPI:%d\n", username[i]);
+//		putcharRS232(username[i]);
+//	}
+
 	while(1){
-		if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
-			int c = getcharBT(Bluetooth_LineStatusReg , Bluetooth_ReceiverFifo);
-			printf("received %d from the Bluetooth \n", c);
-			username[usernameCounter] = c;
-			if(c == 50 || c == 49){ //customer1 and customer2
+		int logout = 0;
+		int counter = 0;
+		int width = 160;
+		int height = 90;
+		//int array[3*width*height];
+		//int size = sizeof array / sizeof array[0];
+		//printf("%d\n", size);
+
+		// Sonar sensor
+		while(1){
+			while(RS232TestForReceivedData() != 1);
+			int distance = getcharRS232();
+			printf("sonar received:%d\n", distance);
+			unsigned char value = distance;
+			unsigned char first;
+			unsigned char second;
+			unsigned char third;
+			first = value%10;
+			value = value/10;
+			second = value%10;
+			value = value/10;
+			third = value%10;
+			*HEX0_1 = first;
+			*HEX2_3 = second;
+			*HEX4_5 = third;
+			if(distance < 15){
+				*LEDS = 1023;
+			}else{
+				*LEDS = 0;
+			}
+
+			// logout logic
+			if(logout == 5){
+				break;
+			}else if(distance == 0){
+				logout++;
+			}
+		}
+
+		printf("done sonar :)))\n");
+
+		// reset signal
+		*simpleBox = 0x1869F;
+		printf("value is now %x, %d\n", *simpleBox, *simpleBox);
+
+		// receive image
+		while(counter < 3*height*width){
+			if(RS232TestForReceivedData() == 1) {
+				*simpleBox = 2*getcharRS232()*0x1000000;
+				//printf("%d\n", counter);
+				counter++;
+			}
+		}
+		printf("value is now %x, %d\n", *simpleBox, *simpleBox);
+
+		printf("done image cropping :)))\n");
+
+		// send bounding box to rpi
+		while(1){
+			if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
 				break;
 			}
-			usernameCounter ++;
-		}
-	}
-
-	// send username to Raspberry Pi
-	for(int i = 0; i <= usernameCounter; i++){
-		printf("send rs232 to RPI:%d\n", username[i]);
-		putcharRS232(username[i]);
-	}
-
-	int logout = 0;
-	// Sonar sensor
-	while(1){
-		while(RS232TestForReceivedData() != 1);
-		int distance = getcharRS232();
-		printf("sonar received:%d\n", distance);
-		unsigned char value = distance;
-		unsigned char first;
-		unsigned char second;
-		unsigned char third;
-		first = value%10;
-		value = value/10;
-		second = value%10;
-		value = value/10;
-		third = value%10;
-		*HEX0_1 = first;
-		*HEX2_3 = second;
-		*HEX4_5 = third;
-		if(distance < 20){
-			*LEDS = 1023;
-		}else{
-			*LEDS =0;
-		}
-
-		// logout logic
-		if(logout == 5){
-			break;
-		}else if(distance == 200){
-			logout++;
+			putcharBT(*simpleBox, Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
 		}
 	}
 }
-
-//for(int i = 0; i < 255; i++){
-//	delay(100);
-//	printf("trasmit %d to the Bluetooth \n", i);
-//	putcharBT(i, Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-//}
-//
-////main for RS232 read
-//int main(void) {
-//	Init_RS232();
-//	while(1){
-//		while(RS232TestForReceivedData() != 1);
-//		int distance = getcharRS232();
-//		printf("received:%d\n", distance);
-//		unsigned char value = distance;
-//		unsigned char first;
-//		unsigned char second;
-//		unsigned char third;
-//		first = value%10;
-//		value = value/10;
-//		second = value%10;
-//		value = value/10;
-//		third = value%10;
-//		*HEX0_1 = first;
-//		*HEX2_3 = second;
-//		*HEX4_5 = third;
-//		if(distance < 20){
-//			*LEDS = 1023;
-//		}
-//		else{
-//			*LEDS =0;
-//		}
-//	}
-//}
-
-// main for RS232 write
-//void main(){
-//	Init_RS232();
-//	int i;
-//	for(i = 0; i < 255; i ++) {
-//		printf("send rs232 num is:%d\n", i);
-//		putcharRS232(i);
-//	}
-//}
