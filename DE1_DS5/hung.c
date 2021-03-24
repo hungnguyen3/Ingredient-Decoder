@@ -233,6 +233,10 @@ int TestForReceivedData(volatile unsigned char *  LineStatusReg) {
 	}
 }
 
+int getHexDigit(int x, int n) {
+    return (x >> (n << 2)) & 0xff;
+}
+
 // main for bluetooth
 int main(void) {
 	Init_BT();
@@ -318,12 +322,28 @@ int main(void) {
 
 		printf("done image cropping :)))\n");
 
+		printf("0 is now %x, %d\n", getHexDigit(*simpleBox,0), getHexDigit(*simpleBox,0));
+		printf("2 is now %x, %d\n", getHexDigit(*simpleBox,2), getHexDigit(*simpleBox,2));
+		printf("2 is now %x, %d\n", getHexDigit(*simpleBox,4), getHexDigit(*simpleBox,4));
+		printf("2 is now %x, %d\n", getHexDigit(*simpleBox,6), getHexDigit(*simpleBox,6));
+
+		int boundingBoxCount = 0;
+		int next = 1;
 		// send bounding box to rpi
 		while(1){
-			if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
+			printf("here");
+			if(boundingBoxCount == 8){
 				break;
 			}
-			putcharBT(*simpleBox, Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
+			if(next == 1){
+				printf("%d\n", boundingBoxCount);
+				putcharBT(getHexDigit(*simpleBox,boundingBoxCount), Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
+				next = 0;
+			}
+			if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
+				boundingBoxCount = boundingBoxCount + 2;
+				next = 1;
+			}
 		}
 	}
 }
