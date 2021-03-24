@@ -78,9 +78,9 @@ def waitForItem():
         ser.write(data)
         if dist < 15:
             print(dist)
-            time.sleep(5)
+            #time.sleep(5)
             takeImage(1, '/small.jpg')
-            takeImage(9, '/download.jpg')
+            takeImage(9, '/big.jpg')
             # send signal to stop
             ser.write(bytes(str(chr(0)), 'ascii'))
             ser.write(bytes(str(chr(0)), 'ascii'))
@@ -114,7 +114,6 @@ def sendImageToDe1():
                 count = count + 1
                 #print(value)
     print(img)
-    time.sleep(15)
     print(count)
 
 while(1):
@@ -151,7 +150,12 @@ while(1):
     print(yMin)
     print(yMax)
     cropImage('/small.jpg', xMin, xMax, yMin, yMax)
-    cropImage('/download.jpg', xMin*9, xMax*9, yMin*9, yMax*9)
+    # hacky fix
+    if yMin > 10:
+        yMin = yMin - 10
+    if xMin > 10:
+        xMin = xMin - 10
+    cropImage('/big.jpg', xMin*9, xMax*9, yMin*9, yMax*9)
 
 cap.release()
 cv2.destroyAllWindows()

@@ -9,8 +9,8 @@ def cropImage(imageName, xMin, xMax, yMin, yMax):
     img = cv2.imread(imgPath + imageName)
     print(img)
     crop = img[yMin:yMax, xMin:xMax]
-    filename = imgPath + '/crop.bmp'
+    filename = imgPath + '/download.jpg'
     cv2.imwrite(filename, crop)
     print("image cropped")
 
-#cropImage('/sushi160.bmp', 8,141,31,85)
+#cropImage('/small.jpg', 8,141,31,85)
