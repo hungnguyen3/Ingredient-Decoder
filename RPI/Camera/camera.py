@@ -4,6 +4,7 @@ import os
 import RPi.GPIO as GPIO
 import time
 import serial
+from crop import cropImage
 
 ser = serial.Serial('/dev/ttyAMA0', 115200)
 if ser.isOpen == False:
@@ -29,17 +30,15 @@ GPIO.setup(GPIO_ECHO, GPIO.IN)
 
 cap = cv2.VideoCapture(0)
 
-cap.set(3,160)
-cap.set(4,90)
-
 ret, frame = cap.read()
 rows, cols, channels = frame.shape
-#print(cols, rows, channels)
 
-def takeImage():
+def takeImage(factor, imageName):
+    cap.set(3,160*factor)
+    cap.set(4,90*factor)
     ret,frame = cap.read()
     dst = frame
-    filename = imgPath + '/output.jpg'
+    filename = imgPath + imageName
     cv2.imwrite(filename, dst)
     print("image generated")
 
@@ -80,7 +79,8 @@ def waitForItem():
         if dist < 15:
             print(dist)
             time.sleep(5)
-            takeImage()
+            takeImage(1, '/small.jpg')
+            takeImage(9, '/download.jpg')
             # send signal to stop
             ser.write(bytes(str(chr(0)), 'ascii'))
             ser.write(bytes(str(chr(0)), 'ascii'))
@@ -102,7 +102,7 @@ def bluetoothLogin():
             print(response)
 
 def sendImageToDe1():
-    img = cv2.imread(imgPath + "/sushi160.bmp")
+    img = cv2.imread(imgPath + "/small.jpg")
     rows,cols,rgb = img.shape
     count = 0
     for i in range(rows-1, -1, -1):
@@ -113,6 +113,8 @@ def sendImageToDe1():
                 ser.write(bytes(str(chr(value)), 'ascii'))
                 count = count + 1
                 #print(value)
+    print(img)
+    time.sleep(15)
     print(count)
 
 while(1):
@@ -124,20 +126,32 @@ while(1):
     sendImageToDe1()
 
     #receive boundingBox
+    boxCounter = 0
+    box = []
     while(1):
         size = blueSer.inWaiting()
         if size != 0:
             print("here")
             response = blueSer.read(1)
+            box.append(response)
+            boxCounter = boxCounter + 1
             print(response)
-            break
+            blueSer.write(bytes(str(chr(0)), 'ascii'))
+            if boxCounter == 4:
+                break
 
-    #signal done
-    blueSer.write(bytes(str(chr(0)), 'ascii'))
-    blueSer.write(bytes(str(chr(0)), 'ascii'))
-
+    print(box)
     # crop image
-
+    xMin = int.from_bytes(box[3], "big")
+    xMax = int.from_bytes(box[2], "big")
+    yMin = int.from_bytes(box[1], "big")
+    yMax = int.from_bytes(box[0], "big")
+    print(xMin)
+    print(xMax)
+    print(yMin)
+    print(yMax)
+    cropImage('/small.jpg', xMin, xMax, yMin, yMax)
+    cropImage('/download.jpg', xMin*9, xMax*9, yMin*9, yMax*9)
 
 cap.release()
 cv2.destroyAllWindows()
