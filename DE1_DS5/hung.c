@@ -2,7 +2,10 @@
 #include <time.h>
 #include <math.h>
 
-#define simpleBox (volatile int *) 0xFF202080
+//#define simpleBox (volatile int *) 0xFF202080	//245
+//#define simpleBox (volatile int *) 0xFF202090	//white	150
+//#define simpleBox (volatile int *) 0xFF202050	//whiteOne 125
+#define simpleBox (volatile int *) 0xFF202060	//whiteTwo 100
 
 #define SWITCHES    (volatile unsigned int *)(0xFF200000)
 #define PUSHBUTTONS (volatile unsigned int *)(0xFF200010)
@@ -138,13 +141,6 @@ void delay(long cycles)
 
 void BTFactoryReset(void)
 {
-	// wait for 1 second between command
-	// enter these commands in upper case
-	// $$$ enter command mode
-	// SF,1 factory reset
-	// SN,Device1 set device name to “Device1”
-	// SP,1234 set 4 digit pin to “1234”
-	// R,1<CR> reboot BT controller
 	char c, Message[100] ;
 	while(1){
 		printf("\r\nEnter Message for Bluetooth Controller:") ;
@@ -241,37 +237,12 @@ int getHexDigit(int x, int n) {
 int main(void) {
 	Init_BT();
 	Init_RS232();
-	//	BTFactoryReset();
-
-//	int usernameCounter = 0;
-//	int username[100];
-//	// waiting for sign in from the user
-//	while(1){
-//		if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
-//			int c = getcharBT(Bluetooth_LineStatusReg , Bluetooth_ReceiverFifo);
-//			printf("received %d from the Bluetooth \n", c);
-//			username[usernameCounter] = c;
-//			if(c == 50 || c == 49){ //customer1 and customer2
-//				break;
-//			}
-//			usernameCounter ++;
-//		}
-//	}
-//
-//	// send username to Raspberry Pi
-//	for(int i = 0; i <= usernameCounter; i++){
-//		printf("send rs232 to RPI:%d\n", username[i]);
-//		putcharRS232(username[i]);
-//	}
 
 	while(1){
 		int logout = 0;
 		int counter = 0;
 		int width = 160;
 		int height = 90;
-		//int array[3*width*height];
-		//int size = sizeof array / sizeof array[0];
-		//printf("%d\n", size);
 
 		// Sonar sensor
 		while(1){
