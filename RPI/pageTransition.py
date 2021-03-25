@@ -6,6 +6,9 @@ import os
 import interface
 import renderingUtil
 import database
+import multiprocessing as mp
+import testyboi as testy
+import time
 
 # import functions and classes
 import googleVision
@@ -17,8 +20,10 @@ backgroundColour = "#263D42"
 pictureExists = False
 newPicture = False
 acceptNextImage = True
-objectImg = None
+objectImg = "/images/testyboi.jpg"
 buffer = None
+imageAltBit = 0
+queue = mp.Queue()
 
 
 class App(tk.Tk):
@@ -190,7 +195,8 @@ class CommonDisplay:
 
     def noImg(self):
         if objectImg is None:
-            self.alert = tk.Label(self, text="No object detected, or image has not loaded yet. \n PLease wait for image of object to show up before attempting scan")
+            self.alert = tk.Label(self,
+                                  text="No object detected, or image has not loaded yet. \n PLease wait for image of object to show up before attempting scan")
             self.alert.pack()
             return True
         return False
@@ -199,13 +205,15 @@ class CommonDisplay:
 class RegularItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        CommonDisplay.__init__(self, message="Scan regular items here", scanFunction=self.CheckIngredientsOCR, parent=parent, controller=controller)
+        CommonDisplay.__init__(self, message="Scan regular items here", scanFunction=self.CheckIngredientsOCR,
+                               parent=parent, controller=controller)
 
 
 class CustomItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        CommonDisplay.__init__(self, message="Scan store custom items here", scanFunction=self.CheckIngredientsRecognition, parent=parent, controller=controller)
+        CommonDisplay.__init__(self, message="Scan store custom items here",
+                               scanFunction=self.CheckIngredientsRecognition, parent=parent, controller=controller)
 
 
 class MainMenu:
@@ -235,27 +243,54 @@ def loadProcessedImage(frame):
     app.frames[frame].promptLabel.pack()
 
 
-def pollPicture():
-    app.after(1000, pollPicture)
+# def pollPicture():
+#     app.after(1000, pollPicture)
+#
+#     global pictureExists
+#     global newPicture
+#     global buffer
+#     global acceptNextImage
+#     global objectImg
+#     pictureExists, img, newPicture = interface.takeImage()  # sets newPicture to false after first call
+#
+#     if pictureExists and newPicture:
+#         buffer = img
+#
+#         if acceptNextImage:
+#             objectImg = buffer
+#             print(objectImg)
+#             loadProcessedImage(RegularItems)
+#             loadProcessedImage(CustomItems)
+#             acceptNextImage = False
 
-    global pictureExists
-    global newPicture
-    global buffer
+def pollPicture():
     global acceptNextImage
     global objectImg
-    pictureExists, img, newPicture = interface.takeImage()  # sets newPicture to false after first call
+    global imageAltBit
+    global queue
+    if not queue.empty():
+        print("not empty")
+        newAltBit = queue.get()
+        if newAltBit != imageAltBit and newAltBit != 0:
+            print("actual image!")
+            imageAltBit = newAltBit
 
-    if pictureExists and newPicture:
-        buffer = img
+            if acceptNextImage:
+                loadProcessedImage(RegularItems)
+                loadProcessedImage(CustomItems)
+                acceptNextImage = False
+    app.after(1, pollPicture)
 
-        if acceptNextImage:
-            objectImg = buffer
-            print(objectImg)
-            loadProcessedImage(RegularItems)
-            loadProcessedImage(CustomItems)
-            acceptNextImage = False
+# def pollPicture():
+#     app.after(1000, pollPicture)
+#     print("uwu")
+
+app.after(3000, pollPicture)
+if __name__ == "__main__":
+    producer = mp.Process(target=testy.produceImage, args=(queue,))
+    producer.start()
+    app.mainloop()
 
 
-app.after(3000, pollPicture())
 
-app.mainloop()
+#
