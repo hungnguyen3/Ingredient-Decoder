@@ -192,6 +192,7 @@ class CommonDisplay:
     def MakeAcceptNextImage(self):
         global acceptNextImage
         acceptNextImage = True
+        actualPoll()
 
     def noImg(self):
         if objectImg is None:
@@ -264,6 +265,11 @@ def loadProcessedImage(frame):
 #             acceptNextImage = False
 
 def pollPicture():
+    actualPoll()
+    app.after(1, pollPicture)
+
+
+def actualPoll():
     global acceptNextImage
     global objectImg
     global imageAltBit
@@ -279,7 +285,7 @@ def pollPicture():
                 loadProcessedImage(RegularItems)
                 loadProcessedImage(CustomItems)
                 acceptNextImage = False
-    app.after(1, pollPicture)
+
 
 # def pollPicture():
 #     app.after(1000, pollPicture)
