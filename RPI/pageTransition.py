@@ -286,7 +286,7 @@ def actualPoll():
         if acceptNextImage:
             loadProcessedImage(RegularItems)
             loadProcessedImage(CustomItems)
-            acceptNextImage = False
+            # acceptNextImage = False
         ackQueue.put(True)
 
 
