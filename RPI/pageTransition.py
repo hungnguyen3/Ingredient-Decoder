@@ -9,6 +9,7 @@ import database
 import multiprocessing as mp
 import testyboi as testy
 import time
+from Camera.camera import *
 
 # import functions and classes
 import googleVision
@@ -22,8 +23,8 @@ newPicture = False
 acceptNextImage = True
 objectImg = "/images/testyboi.jpg"
 buffer = None
-imageAltBit = 0
-queue = mp.Queue()
+imageQueue = mp.Queue()
+ackQueue = mp.Queue()
 
 
 class App(tk.Tk):
@@ -271,25 +272,22 @@ def loadProcessedImage(frame):
 
 def pollPicture():
     actualPoll()
-    app.after(1, pollPicture)
+    app.after(1000, pollPicture)
 
 
 def actualPoll():
     global acceptNextImage
     global objectImg
-    global imageAltBit
-    global queue
-    if not queue.empty():
+    global imageQueue
+    global ackQueue
+    if not imageQueue.empty():
         print("not empty")
-        newAltBit = queue.get()
-        if newAltBit != imageAltBit and newAltBit != 0:
-            print("actual image!")
-            imageAltBit = newAltBit
-
-            if acceptNextImage:
-                loadProcessedImage(RegularItems)
-                loadProcessedImage(CustomItems)
-                #acceptNextImage = False
+        imageQueue.get()
+        if acceptNextImage:
+            loadProcessedImage(RegularItems)
+            loadProcessedImage(CustomItems)
+            acceptNextImage = False
+        ackQueue.put(True)
 
 
 # def pollPicture():
@@ -298,10 +296,7 @@ def actualPoll():
 
 app.after(3000, pollPicture)
 if __name__ == "__main__":
-    producer = mp.Process(target=testy.produceImage, args=(queue,))
+    producer = mp.Process(target=Camera.run, args=(imageQueue, ackQueue))
     producer.start()
+    ackQueue.put(True)
     app.mainloop()
-
-
-
-#

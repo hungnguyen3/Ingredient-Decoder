@@ -33,6 +33,10 @@ cap = cv2.VideoCapture(0)
 ret, frame = cap.read()
 rows, cols, channels = frame.shape
 
+outputQ = None
+ackQ = None
+takeNew = False
+
 def takeImage(factor, imageName):
     cap.set(3,160*factor)
     cap.set(4,90*factor)
@@ -67,30 +71,35 @@ def distance():
 
     return distance
 
+
 def waitForItem():
-    while(1):
+    global takeNew
+    while True:
         time.sleep(0.5)
-        dist = int(distance())
-        if dist >= 128:
-            dist = 127
-        data = bytes(str(chr(dist)), 'ascii')
-        print("data is" + str(data))
-        ser.write(data)
-        if dist < 15:
-            print(dist)
-            #time.sleep(5)
-            takeImage(1, '/small.jpg')
-            takeImage(9, '/big.jpg')
-            # send signal to stop
-            ser.write(bytes(str(chr(0)), 'ascii'))
-            ser.write(bytes(str(chr(0)), 'ascii'))
-            ser.write(bytes(str(chr(0)), 'ascii'))
-            ser.write(bytes(str(chr(0)), 'ascii'))
-            ser.write(bytes(str(chr(0)), 'ascii'))
-            ser.write(bytes(str(chr(0)), 'ascii'))
-            break
-        else:
-            print(dist)
+        if not ackQ.empty():
+            takeNew = ackQ.get()
+        if takeNew:
+            dist = int(distance())
+            if dist >= 128:
+                dist = 127
+            data = bytes(str(chr(dist)), 'ascii')
+            print("data is" + str(data))
+            ser.write(data)
+            if dist < 15:
+                print(dist)
+                # time.sleep(5)
+                takeImage(1, '/small.jpg')
+                takeImage(9, '/big.jpg')
+                # send signal to stop
+                ser.write(bytes(str(chr(0)), 'ascii'))
+                ser.write(bytes(str(chr(0)), 'ascii'))
+                ser.write(bytes(str(chr(0)), 'ascii'))
+                ser.write(bytes(str(chr(0)), 'ascii'))
+                ser.write(bytes(str(chr(0)), 'ascii'))
+                ser.write(bytes(str(chr(0)), 'ascii'))
+                break
+            else:
+                print(dist)
 
 def bluetoothLogin():
     username = []
@@ -116,46 +125,55 @@ def sendImageToDe1():
     print(img)
     print(count)
 
-while(1):
-    # generate picture
-    waitForItem()
-    time.sleep(0.5)
 
-    # send image to DE1
-    sendImageToDe1()
+def run(outputQueue, ackQueue):
+    global outputQ
+    global ackQ
+    global takeNew
+    outputQ = outputQueue
+    ackQ = ackQueue
+    while True:
+        # generate picture
+        waitForItem()
+        time.sleep(0.5)
 
-    #receive boundingBox
-    boxCounter = 0
-    box = []
-    while(1):
-        size = blueSer.inWaiting()
-        if size != 0:
-            print("here")
-            response = blueSer.read(1)
-            box.append(response)
-            boxCounter = boxCounter + 1
-            print(response)
-            blueSer.write(bytes(str(chr(0)), 'ascii'))
-            if boxCounter == 4:
-                break
+        # send image to DE1
+        sendImageToDe1()
 
-    print(box)
-    # crop image
-    xMin = int.from_bytes(box[3], "big")
-    xMax = int.from_bytes(box[2], "big")
-    yMin = int.from_bytes(box[1], "big")
-    yMax = int.from_bytes(box[0], "big")
-    print(xMin)
-    print(xMax)
-    print(yMin)
-    print(yMax)
-    cropImage('/small.jpg', xMin, xMax, yMin, yMax)
-    # hacky fix
-    if yMin > 10:
-        yMin = yMin - 10
-    if xMin > 10:
-        xMin = xMin - 10
-    cropImage('/big.jpg', xMin*9, xMax*9, yMin*9, yMax*9)
+        # receive boundingBox
+        boxCounter = 0
+        box = []
+        while True:
+            size = blueSer.inWaiting()
+            if size != 0:
+                print("here")
+                response = blueSer.read(1)
+                box.append(response)
+                boxCounter = boxCounter + 1
+                print(response)
+                blueSer.write(bytes(str(chr(0)), 'ascii'))
+                if boxCounter == 4:
+                    break
+
+        print(box)
+        # crop image
+        xMin = int.from_bytes(box[3], "big")
+        xMax = int.from_bytes(box[2], "big")
+        yMin = int.from_bytes(box[1], "big")
+        yMax = int.from_bytes(box[0], "big")
+        print(xMin)
+        print(xMax)
+        print(yMin)
+        print(yMax)
+        cropImage('/small.jpg', xMin, xMax, yMin, yMax)
+        # hacky fix
+        if yMin > 10:
+            yMin = yMin - 10
+        if xMin > 10:
+            xMin = xMin - 10
+        cropImage('/big.jpg', xMin*9, xMax*9, yMin*9, yMax*9)
+        outputQ.put(True)
+        takeNew = False
 
 cap.release()
 cv2.destroyAllWindows()

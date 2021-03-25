@@ -5,7 +5,6 @@ import PIL
 from PIL import Image
 import os
 
-imageAltBit = 0
 
 img1 = "/images/download.jpg"
 img2 = "/images/download.jpg"
@@ -13,19 +12,25 @@ img = img1
 workingDir = os.path.dirname(os.path.abspath(__file__))
 
 
-def produceImage(q):
+def produceImage(outputQ, ackQ):
+
     global img
-    global imageAltBit
-    q.put(imageAltBit)
+    takeNew = False
     while True:
-        time.sleep(3)
-        print("new image")
-        dummy = Image.open(workingDir + img)
-        dummy = dummy.save(workingDir + "/images/testyboi.jpg")
-        imageAltBit -= 1
-        imageAltBit = (imageAltBit + 1) % 2 + 1
-        q.put(imageAltBit)
-        #if img == "/images/download.jpg":
-        #    img = "/images/chip.jpg"
-        #elif img == "/images/chip.jpg":
-        #    img = "/images/download.jpg"
+        # time between images
+        time.sleep(random.randint(1, 5))
+
+        if not ackQ.empty():
+            # image process time
+            takeNew = ackQ.get()
+        if takeNew:
+            time.sleep(random.randint(2, 6))
+            print("new image")
+            dummy = Image.open(workingDir + img)
+            dummy = dummy.save(workingDir + "/images/testyboi.jpg")
+            outputQ.put(True)
+            if img == img1:
+                img = img2
+            elif img == img2:
+                img = img1
+            takeNew = False
