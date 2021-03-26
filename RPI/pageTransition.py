@@ -9,7 +9,10 @@ import database
 import multiprocessing as mp
 import testyboi as testy
 import time
-from Camera.camera import *
+import Camera.camera as camera
+import cv2
+
+#cap = cv2.VideoCapture(0)
 
 # import functions and classes
 import googleVision
@@ -21,7 +24,7 @@ backgroundColour = "#263D42"
 pictureExists = False
 newPicture = False
 acceptNextImage = True
-objectImg = "/images/testyboi.jpg"
+objectImg = "/images/download.jpg"
 buffer = None
 imageQueue = mp.Queue()
 ackQueue = mp.Queue()
@@ -296,7 +299,7 @@ def actualPoll():
 
 app.after(3000, pollPicture)
 if __name__ == "__main__":
-    producer = mp.Process(target=Camera.run, args=(imageQueue, ackQueue))
+    producer = mp.Process(target=camera.run, args=(imageQueue, ackQueue))
     producer.start()
     ackQueue.put(True)
     app.mainloop()

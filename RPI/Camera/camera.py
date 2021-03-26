@@ -4,7 +4,7 @@ import os
 import RPi.GPIO as GPIO
 import time
 import serial
-from crop import cropImage
+#from crop import cropImage
 
 ser = serial.Serial('/dev/ttyAMA0', 115200)
 if ser.isOpen == False:
@@ -28,21 +28,32 @@ GPIO_ECHO = 24
 GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
 GPIO.setup(GPIO_ECHO, GPIO.IN)
 
-cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture(0)
 
-ret, frame = cap.read()
-rows, cols, channels = frame.shape
+#ret, frame = cap.read()
+#rows, cols, channels = frame.shape
 
 outputQ = None
 ackQ = None
 takeNew = False
 
-def takeImage(factor, imageName):
+def cropImage(imageName, xMin, xMax, yMin, yMax):
+    img = cv2.imread(imgPath + imageName)
+    print(img)
+    crop = img[yMin:yMax, xMin:xMax]
+    filename = imgPath + '/download.jpg'
+    print(filename)
+    cv2.imwrite(filename, crop)
+    print("image cropped")
+
+def takeImage(cap, factor, imageName):
     cap.set(3,160*factor)
     cap.set(4,90*factor)
     ret,frame = cap.read()
     dst = frame
     filename = imgPath + imageName
+    print(filename)
+    print(dst)
     cv2.imwrite(filename, dst)
     print("image generated")
 
@@ -71,8 +82,7 @@ def distance():
 
     return distance
 
-
-def waitForItem():
+def waitForItem(cap):
     global takeNew
     while True:
         time.sleep(0.5)
@@ -88,8 +98,8 @@ def waitForItem():
             if dist < 15:
                 print(dist)
                 # time.sleep(5)
-                takeImage(1, '/small.jpg')
-                takeImage(9, '/big.jpg')
+                takeImage(cap, 1, '/small.jpg')
+                takeImage(cap, 9, '/big.jpg')
                 # send signal to stop
                 ser.write(bytes(str(chr(0)), 'ascii'))
                 ser.write(bytes(str(chr(0)), 'ascii'))
@@ -125,8 +135,8 @@ def sendImageToDe1():
     print(img)
     print(count)
 
-
 def run(outputQueue, ackQueue):
+    cap = cv2.VideoCapture(0)
     global outputQ
     global ackQ
     global takeNew
@@ -134,7 +144,7 @@ def run(outputQueue, ackQueue):
     ackQ = ackQueue
     while True:
         # generate picture
-        waitForItem()
+        waitForItem(cap)
         time.sleep(0.5)
 
         # send image to DE1
@@ -165,7 +175,9 @@ def run(outputQueue, ackQueue):
         print(xMax)
         print(yMin)
         print(yMax)
-        cropImage('/small.jpg', xMin, xMax, yMin, yMax)
+        time.sleep(5)
+        #cropImage('/small.jpg', xMin, xMax, yMin, yMax)
+        #time.sleep(15)
         # hacky fix
         if yMin > 10:
             yMin = yMin - 10
@@ -175,5 +187,7 @@ def run(outputQueue, ackQueue):
         outputQ.put(True)
         takeNew = False
 
-cap.release()
+#cropImage('/small.jpg', 0, 50, 0, 50)
+#takeImage(9, '/big.jpg')
+#cap.release()
 cv2.destroyAllWindows()
