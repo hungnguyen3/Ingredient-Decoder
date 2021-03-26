@@ -97,7 +97,6 @@ def waitForItem(cap):
             ser.write(data)
             if dist < 15:
                 print(dist)
-                # time.sleep(5)
                 takeImage(cap, 1, '/small.jpg')
                 takeImage(cap, 9, '/big.jpg')
                 # send signal to stop
@@ -175,9 +174,7 @@ def run(outputQueue, ackQueue):
         print(xMax)
         print(yMin)
         print(yMax)
-        time.sleep(5)
         #cropImage('/small.jpg', xMin, xMax, yMin, yMax)
-        #time.sleep(15)
         # hacky fix
         if yMin > 10:
             yMin = yMin - 10

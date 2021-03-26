@@ -242,7 +242,12 @@ def loadProcessedImage(frame):
     # tell users to make google vision call
     global app
     renderingUtil.refresh(app.frames[frame].instruction)
-    app.frames[frame].instruction = tk.Label(app.frames[frame], text="Your item is ready to be scanned", font=('helvetica', 15))
+    try:
+        tryOpen = Image.open(workingDir + "/images/download.jpg")
+        app.frames[frame].instruction = tk.Label(app.frames[frame], text="Your item is ready to be scanned", font=('helvetica', 15))
+    except OSError:
+        print('cannot open')
+        app.frames[frame].instruction = tk.Label(app.frames[frame], text="Please place an item in front of the camera", font=('helvetica', 15))
     app.frames[frame].instruction.pack()
 
     # change the image

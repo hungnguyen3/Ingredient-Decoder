@@ -4,7 +4,11 @@ import math
 workingDir = os.path.dirname(os.path.abspath(__file__))
 
 def resizeImage(relative_path):
-    readImg = Image.open(workingDir + relative_path)
+    try:
+        readImg = Image.open(workingDir + relative_path)
+    except OSError:
+        readImg = Image.open(workingDir + "/images/Error.jpg")
+        print('cannot open')
     width = readImg.width
     height = readImg.height
     while height > 500 or width > 500:
