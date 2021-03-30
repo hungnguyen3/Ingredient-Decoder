@@ -18,8 +18,7 @@ def Get_Personal_List(username):
 
 
 def Get_Custom_Ingredients(item_list):
-    ingredients = ""
-    missCounter = 0
+    ingredients = []
     errorOne = {'message': 'err plist'}
     errorTwo = {'message': None}
     for i in item_list:
@@ -27,20 +26,14 @@ def Get_Custom_Ingredients(item_list):
         PARAMS = {'to_search': i}
         response = requests.post(url=customIngredientsUrl, json=PARAMS)
         resJson = response.json()
+        if resJson['message'] == []:
+            ingredients.append('0')
         for field in resJson['message']:
             if field != errorOne and field != errorTwo:
-                ingredients += " " + field['item_list']
-            else:
-                missCounter += 1
+                ingredients.append(field['item_list'])
 
-    # for element in resJson['message']:
-    #     userList.append(element["p"])
-    print(item_list)
-    print(missCounter)
-    print(len(item_list))
-    if missCounter == len(item_list):
-        return "notRecognition"
-    print("OWO "+ ingredients)
+    print("ingredients array")
+    print(ingredients)
     return ingredients
 
 def Get_Harmful_List():

@@ -157,6 +157,11 @@ class CommonDisplay:
             self.alert = tk.Label(self, text=warning, font=('helvetica', 15))
             self.alert.pack()
 
+    #def customItemEntry(self, itemName, itemIngredients):
+    #    print('making items')
+    #    print(itemName)
+    #    print(itemIngredients)
+
     def CheckIngredientsOCR(self, username):
         if self.noImg():
             return
@@ -172,15 +177,18 @@ class CommonDisplay:
         if self.noImg():
             return
         # get the text from OCR
-        responseRec = googleVision.requestRecognition(objectImg)
-        responseRec = database.Get_Custom_Ingredients(responseRec)
-        # print("OWO \n")
-        # for i in responseRec:
-        #     print(i + " ")
-        # get user plist
+        tags_array = googleVision.requestRecognition(objectImg)
+        ingredients_array = database.Get_Custom_Ingredients(tags_array)
+        print("uwu")
+        print(tags_array)
+        print(ingredients_array)
+
+        #for i in range(0, len(tags_array)):
+        #    self.customItemEntry(self, tags_array[i], ingredients_array[i])
+
         userList = database.Get_Personal_List(username)
         # get the matching array
-        matchingArr = googleVision.getMatchingArr(responseRec, userList)
+        matchingArr = googleVision.getMatchingArr(ingredients_array, userList)
         self.printIntersection("ingredients matching your personal list", matchingArr)
 
     def CheckHarmfulOCR(self):
