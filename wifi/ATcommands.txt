@@ -1,0 +1,10 @@
+https://docs.espressif.com/projects/esp-at/en/latest/AT_Command_Set/Wi-Fi_AT_Commands.html#cmd-dhcp
+
+baudrate = 115200 
+
+//steps to connect the ESP WROOM 02 to a wifi network
+AT+CWMODE=3                         // set to Station+SoftAP
+AT+CWDHCP=1,1                       // enable DHCP
+AT+CWLAP                            // get APs
+AT+CWJAP="ID","password"            // connect to certain wifi
+AT+CWJAP?                           // check current connection
