@@ -9,7 +9,7 @@ import database
 import multiprocessing as mp
 import testyboi as testy
 import time
-import Camera.camera as camera
+# import Camera.camera as camera
 import cv2
 
 #cap = cv2.VideoCapture(0)
@@ -174,6 +174,9 @@ class CommonDisplay:
         # get the text from OCR
         responseRec = googleVision.requestRecognition(objectImg)
         responseRec = database.Get_Custom_Ingredients(responseRec)
+        # print("OWO \n")
+        # for i in responseRec:
+        #     print(i + " ")
         # get user plist
         userList = database.Get_Personal_List(username)
         # get the matching array
@@ -243,7 +246,7 @@ def loadProcessedImage(frame):
     global app
     renderingUtil.refresh(app.frames[frame].instruction)
     try:
-        tryOpen = Image.open(workingDir + "/images/download.jpg")
+        tryOpen = Image.open(workingDir + objectImg)
         app.frames[frame].instruction = tk.Label(app.frames[frame], text="Your item is ready to be scanned", font=('helvetica', 15))
     except OSError:
         print('cannot open')
@@ -258,29 +261,29 @@ def loadProcessedImage(frame):
     app.frames[frame].promptLabel.pack()
 
 
-# def pollPicture():
-#     app.after(1000, pollPicture)
-#
-#     global pictureExists
-#     global newPicture
-#     global buffer
-#     global acceptNextImage
-#     global objectImg
-#     pictureExists, img, newPicture = interface.takeImage()  # sets newPicture to false after first call
-#
-#     if pictureExists and newPicture:
-#         buffer = img
-#
-#         if acceptNextImage:
-#             objectImg = buffer
-#             print(objectImg)
-#             loadProcessedImage(RegularItems)
-#             loadProcessedImage(CustomItems)
-#             acceptNextImage = False
-
 def pollPicture():
-    actualPoll()
     app.after(1000, pollPicture)
+
+    global pictureExists
+    global newPicture
+    global buffer
+    global acceptNextImage
+    global objectImg
+    pictureExists, img, newPicture = interface.takeImage()  # sets newPicture to false after first call
+
+    if pictureExists and newPicture:
+        buffer = img
+
+        if acceptNextImage:
+            objectImg = buffer
+            print(objectImg)
+            loadProcessedImage(RegularItems)
+            loadProcessedImage(CustomItems)
+            acceptNextImage = False
+#
+# def pollPicture():
+#     actualPoll()
+#     app.after(1000, pollPicture)
 
 
 def actualPoll():
@@ -303,8 +306,10 @@ def actualPoll():
 #     print("uwu")
 
 app.after(3000, pollPicture)
-if __name__ == "__main__":
-    producer = mp.Process(target=camera.run, args=(imageQueue, ackQueue))
-    producer.start()
-    ackQueue.put(True)
-    app.mainloop()
+# if __name__ == "__main__":
+#     producer = mp.Process(target=camera.run, args=(imageQueue, ackQueue))
+#     producer.start()
+#     ackQueue.put(True)
+#     app.mainloop()
+
+app.mainloop()
