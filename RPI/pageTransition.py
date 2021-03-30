@@ -110,6 +110,8 @@ class LandingPage(tk.Frame):
 
 class CommonDisplay:
     def __init__(self, controller, parent, message, scanFunction, *args, **kwargs):
+        self.infoButtonList = []
+
         readImg = renderingUtil.resizeImage("/images/Capture.jpg")
         self.img = ImageTk.PhotoImage(readImg)
         self.alert = tk.Label()
@@ -157,10 +159,15 @@ class CommonDisplay:
             self.alert = tk.Label(self, text=warning, font=('helvetica', 15))
             self.alert.pack()
 
-    #def customItemEntry(self, itemName, itemIngredients):
-    #    print('making items')
-    #    print(itemName)
-    #    print(itemIngredients)
+    def customItemEntry(self, itemName, itemIngredients):
+        print('making items')
+        print(itemName)
+        print(itemIngredients)
+
+        infoButton = tk.Button(self, text=itemName, font=('helvetica', 15))
+        infoButton.pack()
+        self.infoButtonList.append(infoButton)
+
 
     def CheckIngredientsOCR(self, username):
         if self.noImg():
@@ -183,8 +190,13 @@ class CommonDisplay:
         print(tags_array)
         print(ingredients_array)
 
-        #for i in range(0, len(tags_array)):
-        #    self.customItemEntry(self, tags_array[i], ingredients_array[i])
+        for i in self.infoButtonList:
+            renderingUtil.refresh(i)
+        self.infoButtonList.clear()
+        for i in range(0, len(tags_array)):
+            if ingredients_array[i] != '0':
+                self.customItemEntry(itemName=tags_array[i], itemIngredients=ingredients_array[i])
+                print("make custom items here")
 
         userList = database.Get_Personal_List(username)
         # get the matching array
