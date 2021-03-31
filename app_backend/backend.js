@@ -14,6 +14,10 @@ MongoClient.connect("mongodb://localhost:27017",
     (err, client) =>{
         const db = client.db("list");
         const db_logic = client.db("logic");
+        app.get("/ws", function(req, res){
+            console.log("hi");
+            res.send("hi");
+        })
         app.post('/compareplist', function(req,res){
             db.collection("account").find({"username": req.body.username}).toArray(function(err,data){
                 if(data.length == 1){
@@ -65,6 +69,7 @@ MongoClient.connect("mongodb://localhost:27017",
         app.post("/plist",function(req,res){
             db.collection("account").find({"username": req.body.username}).toArray(function(err,data){
                 console.log(data);
+                console.log(req.body);
                 if(data.length == 1){
                     res.status(200).json({ message: data[0].itemlist});
                 }
@@ -74,7 +79,7 @@ MongoClient.connect("mongodb://localhost:27017",
             });
         })
         app.post("/plist_add",function(req,res){
-            db.collection("account").updateOne({"username": req.body.username}, {$push:{"itemlist":req.body.plist_add}});
+            db.collection("account").updateOne({"username": req.body.username}, {$push:{"itemlist":{"p": req.body.plist_add}}});
             res.status(200).json({ message: "plist_add"});
         })
         app.post("/plist_clear",function(req,res){
