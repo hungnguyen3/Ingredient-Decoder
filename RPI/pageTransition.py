@@ -6,6 +6,13 @@ import os
 import interface
 import renderingUtil
 import database
+import multiprocessing as mp
+import testyboi as testy
+import time
+import Camera.camera as camera
+import cv2
+
+#cap = cv2.VideoCapture(0)
 
 # import functions and classes
 import googleVision
@@ -17,8 +24,10 @@ backgroundColour = "#263D42"
 pictureExists = False
 newPicture = False
 acceptNextImage = True
-objectImg = None
+objectImg = "/images/download.jpg"
 buffer = None
+imageQueue = mp.Queue()
+ackQueue = mp.Queue()
 
 
 class App(tk.Tk):
@@ -58,20 +67,24 @@ class LandingPage(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         label = tk.Label(self, text="Welcome to Ingredients Decoder")
-        label.config(font=('helvetica', 25))
+        label.config(font=('helvetica', 30))
         label.pack(padx=10, pady=10)
 
-        regular_page = tk.Button(self, text="Regular Items", command=lambda: controller.show_frame(RegularItems))
+        regular_page = tk.Button(self, text="Regular Items", height = 2, font=('helvetica', 15), command=lambda: controller.show_frame(RegularItems))
         regular_page.pack()
 
-        custom_page = tk.Button(self, text="Custom Items", command=lambda: controller.show_frame(CustomItems))
+        custom_page = tk.Button(self, text="Custom Items", height = 2, font=('helvetica', 15), command=lambda: controller.show_frame(CustomItems))
         custom_page.pack()
 
-        user_list = tk.Button(self, text="View personalized list",
+        user_list = tk.Button(self, text="View personalized list", height = 2, font=('helvetica', 15),
                               command=lambda: self.show_plist(LandingPage, controller))
         user_list.pack()
         self.user_list = tk.Label()
 
+        # why gif not running~
+        self.img = ImageTk.PhotoImage(Image.open(workingDir + "/images/cat.gif"))
+        welcomeImg = tk.Label(self, image=self.img)
+        welcomeImg.pack()
         # testy = tk.Button(self, text="Testy boi",
         #                   command=lambda: controller.google_vision("/images/sushiOut.bmp", googleVision.requestRecognition))
         # testy.pack()
@@ -91,7 +104,7 @@ class LandingPage(tk.Frame):
         for element in userList:
             str1 += element.lower()
             str1 += " "
-        self.user_list = tk.Label(controller.frames[context], text='Here is your list: ' + str1)
+        self.user_list = tk.Label(controller.frames[context], text='Here is your list: ' + str1, font=('helvetica', 15))
         self.user_list.pack(padx=10, pady=10)
 
 
@@ -104,44 +117,44 @@ class CommonDisplay:
         # CommonDisplay.__init__(self)
 
         label = tk.Label(self, text=message)
-        label.config(font=('helvetica', 25))
+        label.config(font=('helvetica', 30))
         label.pack(padx=10, pady=10)
-        scan_items = tk.Button(self, text="Check Ingredients",
+        scan_items = tk.Button(self, text="Check Ingredients", height = 2, font=('helvetica', 15),
                                command=lambda: scanFunction("customer1"))
 
         scan_items.pack()
-        start_page = tk.Button(self, text="Back to Home Page", command=lambda: controller.show_frame(LandingPage))
+        start_page = tk.Button(self, text="Back to Home Page", height = 2, font=('helvetica', 15), command=lambda: controller.show_frame(LandingPage))
         start_page.pack()
 
-        self.instruction = tk.Label(self, text="Place item inside box with ingredients list facing camera")
+        self.instruction = tk.Label(self, text="Place item inside box with ingredients list facing camera", font=('helvetica', 15))
         self.instruction.pack()
 
         self.promptLabel = tk.Label(self, image=self.img)
         self.promptLabel.pack()
 
-        self.checkNewItem = tk.Button(self, text="CLick here to check another item",
+        self.checkNewItem = tk.Button(self, text="Click here to check another item", height = 2, font=('helvetica', 15),
                                       command=lambda: self.MakeAcceptNextImage())
         self.checkNewItem.pack()
 
     def printIntersection(self, warning, matchingArr):
         renderingUtil.refresh(self.alert)
         if matchingArr == "notOCR":
-            self.alert = tk.Label(self, text="No ingredients text detected")
+            self.alert = tk.Label(self, text="No ingredients text detected", font=('helvetica', 15))
             self.alert.pack()
             return
         if matchingArr == "notRecognition":
-            self.alert = tk.Label(self, text="Not recognized as a store custom item. Maybe try regular item instead?")
+            self.alert = tk.Label(self, text="Not recognized as a store custom item. Maybe try regular item instead?", font=('helvetica', 15))
             self.alert.pack()
             return
         if not matchingArr:
-            self.alert = tk.Label(self, text="No harmful ingredients detected")
+            self.alert = tk.Label(self, text="No harmful ingredients detected", font=('helvetica', 15))
             self.alert.pack()
         else:
             warning = "We found the following " + warning + " that you might not want: \n "
             for element in matchingArr:
                 warning += element + ", "
             warning = warning[:-2]
-            self.alert = tk.Label(self, text=warning)
+            self.alert = tk.Label(self, text=warning, font=('helvetica', 15))
             self.alert.pack()
 
     def CheckIngredientsOCR(self, username):
@@ -187,10 +200,13 @@ class CommonDisplay:
     def MakeAcceptNextImage(self):
         global acceptNextImage
         acceptNextImage = True
+        actualPoll()
 
     def noImg(self):
         if objectImg is None:
-            self.alert = tk.Label(self, text="No object detected, or image has not loaded yet. \n PLease wait for image of object to show up before attempting scan")
+            self.alert = tk.Label(self,
+                                  text="No object detected, or image has not loaded yet. \n PLease wait for image of object to show up before attempting scan",
+                                  font=('helvetica', 15))
             self.alert.pack()
             return True
         return False
@@ -199,13 +215,15 @@ class CommonDisplay:
 class RegularItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        CommonDisplay.__init__(self, message="Scan regular items here", scanFunction=self.CheckIngredientsOCR, parent=parent, controller=controller)
+        CommonDisplay.__init__(self, message="Scan regular items here", scanFunction=self.CheckIngredientsOCR,
+                               parent=parent, controller=controller)
 
 
 class CustomItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        CommonDisplay.__init__(self, message="Scan store custom items here", scanFunction=self.CheckIngredientsRecognition, parent=parent, controller=controller)
+        CommonDisplay.__init__(self, message="Scan store custom items here",
+                               scanFunction=self.CheckIngredientsRecognition, parent=parent, controller=controller)
 
 
 class MainMenu:
@@ -224,7 +242,12 @@ def loadProcessedImage(frame):
     # tell users to make google vision call
     global app
     renderingUtil.refresh(app.frames[frame].instruction)
-    app.frames[frame].instruction = tk.Label(app.frames[frame], text="Your item is ready to be scanned")
+    try:
+        tryOpen = Image.open(workingDir + "/images/download.jpg")
+        app.frames[frame].instruction = tk.Label(app.frames[frame], text="Your item is ready to be scanned", font=('helvetica', 15))
+    except OSError:
+        print('cannot open')
+        app.frames[frame].instruction = tk.Label(app.frames[frame], text="Please place an item in front of the camera", font=('helvetica', 15))
     app.frames[frame].instruction.pack()
 
     # change the image
@@ -235,27 +258,53 @@ def loadProcessedImage(frame):
     app.frames[frame].promptLabel.pack()
 
 
+# def pollPicture():
+#     app.after(1000, pollPicture)
+#
+#     global pictureExists
+#     global newPicture
+#     global buffer
+#     global acceptNextImage
+#     global objectImg
+#     pictureExists, img, newPicture = interface.takeImage()  # sets newPicture to false after first call
+#
+#     if pictureExists and newPicture:
+#         buffer = img
+#
+#         if acceptNextImage:
+#             objectImg = buffer
+#             print(objectImg)
+#             loadProcessedImage(RegularItems)
+#             loadProcessedImage(CustomItems)
+#             acceptNextImage = False
+
 def pollPicture():
+    actualPoll()
     app.after(1000, pollPicture)
 
-    global pictureExists
-    global newPicture
-    global buffer
+
+def actualPoll():
     global acceptNextImage
     global objectImg
-    pictureExists, img, newPicture = interface.takeImage()  # sets newPicture to false after first call
-
-    if pictureExists and newPicture:
-        buffer = img
-
+    global imageQueue
+    global ackQueue
+    if not imageQueue.empty():
+        print("not empty")
+        imageQueue.get()
         if acceptNextImage:
-            objectImg = buffer
-            print(objectImg)
             loadProcessedImage(RegularItems)
             loadProcessedImage(CustomItems)
-            acceptNextImage = False
+            # acceptNextImage = False
+        ackQueue.put(True)
 
 
-app.after(3000, pollPicture())
+# def pollPicture():
+#     app.after(1000, pollPicture)
+#     print("uwu")
 
-app.mainloop()
+app.after(3000, pollPicture)
+if __name__ == "__main__":
+    producer = mp.Process(target=camera.run, args=(imageQueue, ackQueue))
+    producer.start()
+    ackQueue.put(True)
+    app.mainloop()
