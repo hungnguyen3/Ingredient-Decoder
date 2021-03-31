@@ -3,14 +3,19 @@ wifi.sta.config("name","password")
 wifi.sta.connect()
 tmr.delay(1000000)
 
--- trying get/post requests
+-- trying get request
 sk=net.createConnection(net.TCP, 0)
 sk:on("receive", function(sck, c) print(c) end )
 sk:connect(3000,"52.138.39.36")
 sk:send("GET /ws\r\nConnection: keep-alive\r\nAccept: /\r\n\r\n")
 
---------------------------------------
+-- trying single quotation marks
+sk=net.createConnection(net.TCP, 0)
+sk:on('receive', function(sck, c) print(c) end )
+sk:connect(3000,'52.138.39.36')
+sk:send('GET /ws\r\nConnection: keep-alive\r\nAccept: */*\r\n\r\n')
 
+-- trying post request
 data_table = {
     to_search = "Apple",
 }
@@ -28,8 +33,7 @@ sk:send("POST /search_byname\r\nHost: 52.138.39.36\r\nConnection: keep-alive\r\n
         "\r\n"..
         data)
 
-
----------------------------------------
+-- post request format
 uri = "/login"
 host = "52.138.39.36"
 sk:send("POST "..uri.." HTTP/1.1\r\n"..
