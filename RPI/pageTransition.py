@@ -35,14 +35,14 @@ class App(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
         self.attributes('-fullscreen', True)
 
-        canvas = tk.Canvas(self, bg=backgroundColour)
-        canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas = tk.Canvas(self, bg=backgroundColour)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
 
         # Set up Menu
         MainMenu(self)
 
         # Set up Frames
-        container = tk.Frame(canvas)
+        container = tk.Frame(self.canvas)
         container.place(relwidth=0.75, relheight=0.75, relx=0.1, rely=0.1)
         # container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
@@ -111,6 +111,7 @@ class LandingPage(tk.Frame):
 class CommonDisplay:
     def __init__(self, controller, parent, message, scanFunction, *args, **kwargs):
         self.infoButtonList = []
+        self.counter = 0
 
         readImg = renderingUtil.resizeImage("/images/Capture.jpg")
         self.img = ImageTk.PhotoImage(readImg)
@@ -159,12 +160,26 @@ class CommonDisplay:
             self.alert = tk.Label(self, text=warning, font=('helvetica', 15))
             self.alert.pack()
 
-    def customItemEntry(self, itemName, itemIngredients):
-        print('making items')
-        print(itemName)
-        print(itemIngredients)
+    def printIngredients(self, arg):
+        # list = tk.Label(self,
+        #          text=arg,
+        #          font=('helvetica', 15))
+        # list.pack()
 
-        infoButton = tk.Button(self, text=itemName, font=('helvetica', 15))
+        height = 5
+        width = 5
+        for i in range(height):  # Rows
+            for j in range(width):  # Columns
+                b = tk.Entry(app.canvas, text="")
+                b.grid(row=i, column=j)
+
+
+    def customItemEntry(self, itemName, itemIngredients):
+        # print('making items')
+        # print(itemName)
+        # print(itemIngredients)
+
+        infoButton = tk.Button(self, text=itemName, font=('helvetica', 15), command=lambda: self.printIngredients(itemIngredients))
         infoButton.pack()
         self.infoButtonList.append(infoButton)
 
