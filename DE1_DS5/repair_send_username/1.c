@@ -265,6 +265,7 @@ int main(void) {
 				printf("send rs232 to RPI:%d\n", username[i]);
 				putcharRS232(username[i]);
 			}
+			// do a get request for twilio
 
 	}
 
