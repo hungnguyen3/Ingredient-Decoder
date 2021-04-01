@@ -296,7 +296,9 @@ void WFFactoryReset (void)
 	char Message9[100]= "sk:send('GET /sms\\r\\nConnection: keep-alive\\r\\nAccept: */*\\r\\n\\r\\n')";
     char temp[20]= "\r\n";
 
-    send_code(Message1, temp);
+    send_code(temp, temp);
+	send_code(temp, temp);
+	send_code(Message1, temp);
     send_code(Message2, temp);
     send_code(Message3, temp);
     send_code(Message4, temp);
