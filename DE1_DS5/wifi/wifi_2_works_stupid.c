@@ -120,199 +120,6 @@ void RS232Flush(void) { // read til nothing
 	}
 	return;
 }
-
-
-
-
-
-
-
-
-
-
-//int main(void) {
-//
-//
-//	int iterator, i;
-//	Init_BT();
-//	BTFactoryReset();
-//
-//
-////	Init_RS232();
-//
-//
-////	char Message[100] ;
-////	while(1){
-////		printf("\r\nEnter Message for rs232 Controller:") ;
-////		gets(Message);
-////		printf("send rs232 message is:%s\n", Message);
-////
-////		int iterator= 0;
-////		while (Message[iterator] != '\0') {
-////			putcharRS232(Message[iterator]);
-////			iterator++;
-////		}
-////	}
-//
-////	int i;
-////	for(i = 0; i < 255; i ++) {
-////		printf("send rs232 num is:%d\n", i);
-////		putcharRS232(i);
-////		//delay(10);
-////	}
-//
-//
-////	int i;
-////	for(i = 0; i < 255; i ++) {
-////		printf("send rs232 num is:%d\n", i);
-////		putcharRS232(i);
-////
-////		while(RS232TestForReceivedData() != 1 && getcharRS232() != 57){
-////			putcharRS232(i);
-////			int answer = getcharRS232();
-////			printf("received: %d\n", answer);;
-////		}
-////	}
-//
-//
-//
-////RS232TestForReceivedData() != 1
-//
-////	if(num != ans)
-////		printf("Error, the words are not the same.");
-////	else
-////		printf("Success, words are the same.");
-////	RS232Flush();
-//	return 0;
-//}
-//
-//
-//
-//
-//
-//
-//
-//void BTFactoryReset(void)
-//{
-//// wait for 1 second between command
-//// enter these commands in upper case
-//// $$$ enter command mode
-//// SF,1 factory reset
-//// SN,Device1 set device name to “Device1”
-//// SP,1234 set 4 digit pin to “1234”
-//// R,1<CR> reboot BT controller
-//	char c, Message[100] ;
-//	int i;
-//	while(1){
-//		printf("\r\nEnter Message for Bluetooth Controller:") ;
-//		gets(Message); // get command string from user keyboard
-// //BTOutMessage(&Message) ; // write string to BT device
-//		printf("THE Message IS:%s\n", Message);
-//
-//		int iterator= 0;
-//		while (Message[iterator] != '\0') {
-//			putchar_uart(Message[iterator], Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo) ;
-//			iterator++;
-//		}
-// // if the command string was NOT "$$$" send \r\n
-//		if(strcmp(Message, "$$$") != 0) { // $$$ puts BT module into command mode
-//  		  	  putchar_uart('\r', Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo) ;
-//  		  	  putchar_uart('\n',  Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo ) ;
-//		}
-// // now read back acknowledge string from device and display on console,
-// // will timeout after no communication for about 2 seconds
-//		for(i = 0; i < 2000000000; i ++) {
-//			if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
-//				c = getchar_uart(Bluetooth_LineStatusReg ,   Bluetooth_ReceiverFifo) ;
-//				printf("%c", c);
-//				i=0 ; // reset timer if we got something back
-//			}
-//		}
-//	}
-//}
-//
-//void BTOutMessage(char ** Message){
-//int iterator=0;
-////while(iterator<100 || Message[iterator]!= NULL){
-////	putchar_uart(*Message[iterator],Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-////	iterator++;
-////}
-//while(iterator<100 || Message[iterator]!= NULL){
-////	putchar_uart(*Message[iterator],Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-////	iterator++;
-//printf("%c", Message[iterator] );
-//iterator ++;
-//}
-//
-//}
-//
-//
-//void Init_BT(void)
-//{
-//
-//// set bit 7 of Line Control Register to 1, to gain access to the baud rate registers
-//unsigned char line_control_register;
-//line_control_register= *Bluetooth_LineControlReg;
-//line_control_register = line_control_register |  0x80;
-//*Bluetooth_LineControlReg= line_control_register;
-// // set Divisor latch (LSB and MSB) with correct value for required baud rate
-//// example 0x0145
-// *Bluetooth_DivisorLatchLSB =0x51;
-// *Bluetooth_DivisorLatchMSB =0x00;
-// // set bit 7 of Line control register back to 0 and
-// // program other bits in that reg for 8 bit data,
-// // 1 stop bit, no parity etc
-// //0000 0011
-// *Bluetooth_LineControlReg= 0x03;
-// // Reset the Fifo’s in the FiFo Control Reg by setting bits 1 & 2
-//*Bluetooth_FifoControlReg = *Bluetooth_FifoControlReg | 0x06;
-// // Now Clear all bits in the FiFo control registers
-//*Bluetooth_FifoControlReg = *Bluetooth_FifoControlReg ^  0x06;
-//}
-//
-//
-//
-//int putchar_uart(int c, volatile unsigned char *  LineStatusReg ,  volatile unsigned char *  TransmitterFifo)
-//{
-// // wait for Transmitter Holding Register bit (5) of line status register to be '1'
-// // indicating we can write to the device
-// while ( (*LineStatusReg & 0x20)!= 0x20){
-//;
-// }
-// *TransmitterFifo = (unsigned char)c;
-//// write character to Transmitter fifo register
-//return c;
-//// return the character we printed
-//
-//}
-//int getchar_uart( volatile unsigned char *  LineStatusReg ,  volatile unsigned char *  ReceiverFifo )
-//{
-//
-//  while ( (*LineStatusReg & 0x01)!= 0x01){
-//
-// ;
-//  }
-// // wait for Data Ready bit (0) of line status register to be '1'
-// // read new character from ReceiverFiFo register
-// return (int) *ReceiverFifo;
-// // return new character
-//}
-//// the following function polls the UART to determine if any character
-//// has been received. It doesn't wait for one, or read it, it simply tests
-//// to see if one is available to read from the FIFO
-//int TestForReceivedData(volatile unsigned char *  LineStatusReg)
-//{
-// // if RS232_LineStatusReg bit 0 is set to 1
-// if((*LineStatusReg & 0x01)== 0x01)
-// return TRUE;
-// else
-// return FALSE;
-// //return TRUE, otherwise return FALSE
-//}
-
-
-
-
 //..................................................
 
 void BTOutMessage (char * Message){
@@ -329,14 +136,6 @@ void BT_Flush (void)
 //#include <io.h>
 void BTFactoryReset (void)
 {
-   // wait for 1 second between command
-   // enter these commands in upper case
-   // $$$ enter command mode
-   // SF,1 factory reset
-   // SN,Device1 set device name to “Device1”
-   // SP,1234 set 4 digit pin to “1234”
-   // R,1<CR> reboot BT controller
-
    char c, Message[100] ;
    int i;
    char temp[20];
@@ -449,15 +248,6 @@ void send_code(char * Message, char * temp){
 }
 void WFFactoryReset (void)
 {
-   // wait for 1 second between command
-   // enter these commands in upper case
-   // $$$ enter command mode
-   // SF,1 factory reset
-   // SN,Device1 set device name to “Device1”
-   // SP,1234 set 4 digit pin to “1234”
-   // R,1<CR> reboot BT controller
-
-
    char Message1[100]= "wifi.sta.config('TP-LINK_888','12345687')";
 	char Message2[100]= "wifi.sta.connect()";
 	char Message3[100]= "tmr.delay(1000000)";
@@ -478,15 +268,6 @@ void WFFactoryReset (void)
    send_code(Message7, temp);
    send_code(Message8, temp);
    send_code(Message9, temp);
-
-
-
-
-
-   // put lua lines into Message array
-
-
-
 }
 
 int testWF (void)
@@ -538,20 +319,6 @@ int WF_TestForReceivedData (void)
 }
 
 void main(){
-
-//	Init_RS232();
-//
-//	int i;
-//	for(i = 0; i < 255; i ++) {
-//		printf("send rs232 num is:%d\n", i);
-//		putcharRS232(i);
-//	}
-//
-//
-//
-//    Init_BT();
-//    BTFactoryReset();
-
    Init_WF();
    WFFactoryReset();
 }
