@@ -112,6 +112,7 @@ class CommonDisplay:
     def __init__(self, controller, parent, message, scanFunction, *args, **kwargs):
         self.infoButtonList = []
         self.counter = 0
+        self.itemList = [None]*20 #20 items max
 
         readImg = renderingUtil.resizeImage("/images/Capture.jpg")
         self.img = ImageTk.PhotoImage(readImg)
@@ -160,16 +161,10 @@ class CommonDisplay:
             self.alert = tk.Label(self, text=warning, font=('helvetica', 15))
             self.alert.pack()
 
-    # def printIngredients(self, arg):
-        # subcanvas = tk.Canvas(app.canvas, height=100000000)
-        # subcanvas.pack(padx=(50, 50), pady=(550, 0))
-        #
-        # height = 5
-        # width = 5
-        # for i in range(height):  # Rows
-        #     for j in range(width):  # Columns
-        #         b = tk.Entry(subcanvas, text="")
-        #         b.grid(row=i, column=j)
+    def printIngredients(self, subcanvas, itemIngredients, i):
+        print(i)
+        ingredients_list = tk.Label(subcanvas, text=itemIngredients, borderwidth=2, relief="solid")
+        ingredients_list.grid(row=i, column=1)
 
 
     # def customItemEntry(self, itemName, itemIngredients):
@@ -197,15 +192,16 @@ class CommonDisplay:
         ingredients_array = database.Get_Custom_Ingredients(tags_array)
 
         subcanvas = tk.Canvas(app.canvas, height=100000000)
-        subcanvas.pack(padx=(50, 50), pady=(550, 0))
+        subcanvas.pack(padx=(50, 50), pady=(530, 0))
 
         for i in range(0, len(tags_array)):  # Rows
                 if ingredients_array[i] != '0':
-                    item = tk.Label(subcanvas, text=tags_array[i], borderwidth=2, relief="solid")
-                    item.grid(row=i, column=0)
-                    ingredients_list = tk.Label(subcanvas, text=ingredients_array[i], borderwidth=2, relief="solid")
-                    ingredients_list.grid(row=i, column=1)
-
+                    self.itemList[i] = tk.Button(subcanvas, text=tags_array[i], borderwidth=2, relief="solid", height = 2, font=('helvetica', 15),
+                                            command=lambda: self.printIngredients(subcanvas, ingredients_array[i], i))
+                    self.itemList[i].grid(row=i, column=0)
+                    #ingredients_list = tk.Label(subcanvas, text=ingredients_array[i], borderwidth=2, relief="solid")
+                    #ingredients_list.grid(row=i, column=1)
+        print(self.index)
         userList = database.Get_Personal_List(username)
         # get the matching array
         matchingArr = googleVision.getMatchingArr(ingredients_array, userList)
