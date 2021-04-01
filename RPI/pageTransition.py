@@ -160,30 +160,22 @@ class CommonDisplay:
             self.alert = tk.Label(self, text=warning, font=('helvetica', 15))
             self.alert.pack()
 
-    def printIngredients(self, arg):
-        # list = tk.Label(self,
-        #          text=arg,
-        #          font=('helvetica', 15))
-        # list.pack()
-        subcanvas = tk.Canvas(app.canvas, height=100000000)
-        subcanvas.pack(padx=(50, 50), pady=(550, 0))
-
-        height = 5
-        width = 5
-        for i in range(height):  # Rows
-            for j in range(width):  # Columns
-                b = tk.Entry(subcanvas, text="")
-                b.grid(row=i, column=j)
+    # def printIngredients(self, arg):
+        # subcanvas = tk.Canvas(app.canvas, height=100000000)
+        # subcanvas.pack(padx=(50, 50), pady=(550, 0))
+        #
+        # height = 5
+        # width = 5
+        # for i in range(height):  # Rows
+        #     for j in range(width):  # Columns
+        #         b = tk.Entry(subcanvas, text="")
+        #         b.grid(row=i, column=j)
 
 
-    def customItemEntry(self, itemName, itemIngredients):
-        # print('making items')
-        # print(itemName)
-        # print(itemIngredients)
-
-        infoButton = tk.Button(self, text=itemName, font=('helvetica', 15), command=lambda: self.printIngredients(itemIngredients))
-        infoButton.pack()
-        self.infoButtonList.append(infoButton)
+    # def customItemEntry(self, itemName, itemIngredients):
+    #     infoButton = tk.Button(self, text=itemName, font=('helvetica', 15), command=lambda: self.printIngredients(itemIngredients))
+    #     infoButton.pack()
+    #     self.infoButtonList.append(infoButton)
 
 
     def CheckIngredientsOCR(self, username):
@@ -203,17 +195,16 @@ class CommonDisplay:
         # get the text from OCR
         tags_array = googleVision.requestRecognition(objectImg)
         ingredients_array = database.Get_Custom_Ingredients(tags_array)
-        print("uwu")
-        print(tags_array)
-        print(ingredients_array)
 
-        for i in self.infoButtonList:
-            renderingUtil.refresh(i)
-        self.infoButtonList.clear()
-        for i in range(0, len(tags_array)):
-            if ingredients_array[i] != '0':
-                self.customItemEntry(itemName=tags_array[i], itemIngredients=ingredients_array[i])
-                print("make custom items here")
+        subcanvas = tk.Canvas(app.canvas, height=100000000)
+        subcanvas.pack(padx=(50, 50), pady=(550, 0))
+
+        for i in range(0, len(tags_array)):  # Rows
+                if ingredients_array[i] != '0':
+                    item = tk.Label(subcanvas, text=tags_array[i], borderwidth=2, relief="solid")
+                    item.grid(row=i, column=0)
+                    ingredients_list = tk.Label(subcanvas, text=ingredients_array[i], borderwidth=2, relief="solid")
+                    ingredients_list.grid(row=i, column=1)
 
         userList = database.Get_Personal_List(username)
         # get the matching array
