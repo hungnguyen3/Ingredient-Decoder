@@ -165,12 +165,14 @@ class CommonDisplay:
         #          text=arg,
         #          font=('helvetica', 15))
         # list.pack()
+        subcanvas = tk.Canvas(app.canvas, height=100000000)
+        subcanvas.pack(padx=(50, 50), pady=(550, 0))
 
         height = 5
         width = 5
         for i in range(height):  # Rows
             for j in range(width):  # Columns
-                b = tk.Entry(app.canvas, text="")
+                b = tk.Entry(subcanvas, text="")
                 b.grid(row=i, column=j)
 
 
