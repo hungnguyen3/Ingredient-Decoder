@@ -7,6 +7,8 @@ import interface
 import renderingUtil
 import database
 import multiprocessing as mp
+from functools import partial
+import ctypes
 import testyboi as testy
 import time
 # import Camera.camera as camera
@@ -113,6 +115,7 @@ class CommonDisplay:
         self.infoButtonList = []
         self.counter = 0
         self.itemList = [None]*20 #20 items max
+        self.ingredientsList = [None]*20
 
         readImg = renderingUtil.resizeImage("/images/Capture.jpg")
         self.img = ImageTk.PhotoImage(readImg)
@@ -162,9 +165,8 @@ class CommonDisplay:
             self.alert.pack()
 
     def printIngredients(self, subcanvas, itemIngredients, i):
-        print(i)
-        ingredients_list = tk.Label(subcanvas, text=itemIngredients, borderwidth=2, relief="solid")
-        ingredients_list.grid(row=i, column=1)
+        self.ingredientsList[i] = tk.Label(subcanvas, text=itemIngredients, borderwidth=2, relief="solid", height = 2, font=('helvetica', 15) )
+        self.ingredientsList[i].grid(row=i, column=1)
 
 
     # def customItemEntry(self, itemName, itemIngredients):
@@ -194,14 +196,16 @@ class CommonDisplay:
         subcanvas = tk.Canvas(app.canvas, height=100000000)
         subcanvas.pack(padx=(50, 50), pady=(530, 0))
 
+        # init ingredients list array
+
         for i in range(0, len(tags_array)):  # Rows
-                if ingredients_array[i] != '0':
-                    self.itemList[i] = tk.Button(subcanvas, text=tags_array[i], borderwidth=2, relief="solid", height = 2, font=('helvetica', 15),
-                                            command=lambda: self.printIngredients(subcanvas, ingredients_array[i], i))
-                    self.itemList[i].grid(row=i, column=0)
+            if ingredients_array[i] != '0':
+                ahoy = partial(self.printIngredients, subcanvas, ingredients_array[i], i)
+                self.itemList[i] = tk.Button(subcanvas, text=tags_array[i], borderwidth=2, relief="solid", height = 2, font=('helvetica', 15),
+                                            command=ahoy)
+                self.itemList[i].grid(row=i, column=0)
                     #ingredients_list = tk.Label(subcanvas, text=ingredients_array[i], borderwidth=2, relief="solid")
                     #ingredients_list.grid(row=i, column=1)
-        print(self.index)
         userList = database.Get_Personal_List(username)
         # get the matching array
         matchingArr = googleVision.getMatchingArr(ingredients_array, userList)
