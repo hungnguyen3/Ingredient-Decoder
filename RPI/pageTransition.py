@@ -45,7 +45,7 @@ class App(tk.Tk):
 
         # Set up Frames
         container = tk.Frame(self.canvas)
-        container.place(relwidth=0.75, relheight=0.75, relx=0.1, rely=0.1)
+        container.place(relwidth=0.75, relheight=0.85, relx=0.1, rely=0.1)
         # container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
@@ -116,6 +116,7 @@ class CommonDisplay:
         self.counter = 0
         self.itemList = [None]*20 #20 items max
         self.ingredientsList = [None]*20
+        self.subcanvas = tk.Canvas()
 
         readImg = renderingUtil.resizeImage("/images/Capture.jpg")
         self.img = ImageTk.PhotoImage(readImg)
@@ -130,7 +131,7 @@ class CommonDisplay:
                                command=lambda: scanFunction("customer1"))
 
         scan_items.pack()
-        start_page = tk.Button(self, text="Back to Home Page", height = 2, font=('helvetica', 15), command=lambda: controller.show_frame(LandingPage))
+        start_page = tk.Button(self, text="Back to Home Page", height = 2, font=('helvetica', 15), command=lambda: self.backToHomePage(controller))
         start_page.pack()
 
         self.instruction = tk.Label(self, text="Place item inside box with ingredients list facing camera", font=('helvetica', 15))
@@ -139,9 +140,20 @@ class CommonDisplay:
         self.promptLabel = tk.Label(self, image=self.img)
         self.promptLabel.pack()
 
-        self.checkNewItem = tk.Button(self, text="Click here to check another item", height = 2, font=('helvetica', 15),
-                                      command=lambda: self.MakeAcceptNextImage())
-        self.checkNewItem.pack()
+        #self.checkNewItem = tk.Button(self, text="Click here to check another item", height = 2, font=('helvetica', 15),
+        #                              command=lambda: self.MakeAcceptNextImage())
+        #self.checkNewItem.pack()
+
+    def backToHomePage(self, controller):
+        for i in self.itemList:
+            if i != None:
+                renderingUtil.refresh(i)
+        for j in self.ingredientsList:
+            if j != None:
+                renderingUtil.refresh(j)
+        renderingUtil.refresh(self.subcanvas)
+        renderingUtil.refresh(self.alert)
+        controller.show_frame(LandingPage)
 
     def printIntersection(self, warning, matchingArr):
         renderingUtil.refresh(self.alert)
@@ -193,16 +205,15 @@ class CommonDisplay:
         tags_array = googleVision.requestRecognition(objectImg)
         ingredients_array = database.Get_Custom_Ingredients(tags_array)
 
-        subcanvas = tk.Canvas(app.canvas, height=100000000)
-        subcanvas.pack(padx=(50, 50), pady=(530, 0))
+        self.subcanvas = tk.Canvas(app.canvas, height=100000000)
+        self.subcanvas.pack(padx=(50, 50), pady=(550, 0))
 
         # init ingredients list array
-
         max = 0
         for i in range(0, len(tags_array)):  # Rows
             if ingredients_array[i] != '0':
-                ahoy = partial(self.printIngredients, subcanvas, ingredients_array[i], i)
-                self.itemList[i] = tk.Button(subcanvas, text=tags_array[i], borderwidth=2, relief="solid", height = 2, font=('helvetica', 15),
+                ahoy = partial(self.printIngredients, self.subcanvas, ingredients_array[i], i)
+                self.itemList[i] = tk.Button(self.subcanvas, text=tags_array[i], borderwidth=2, relief="solid", height = 2, font=('helvetica', 15),
                                             command=ahoy)
                 self.itemList[i].grid(row=i, column=0, padx=10, sticky="W")
                 if self.itemList[i].winfo_width() > max:

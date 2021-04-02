@@ -12,7 +12,7 @@ def resizeImage(relative_path):
         print('cannot open')
     width = readImg.width
     height = readImg.height
-    while height > 100 or width > 100:
+    while height > 400 or width > 400:
         height = height * 0.9
         width = width * 0.9
     width = math.floor(width)
