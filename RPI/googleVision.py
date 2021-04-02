@@ -49,16 +49,25 @@ def requestOCR(img_path):
 
 
 def requestRecognition(img_path):
-    img_data = prepareRequest(img_path, 'LABEL_DETECTION', 10)
+    retArray = []
+    img_data = prepareRequest(img_path, 'OBJECT_LOCALIZATION', 10)
     result = requests.post(url,
                            data=img_data,
                            params={'key': key},
                            headers={'Content-Type': 'application/json'})
-    result = [item.get('description')
-              for item in result.json()["responses"][0]["labelAnnotations"]
-              if item["score"] > minScore]
+    # result = [item.get('description')
+    #           for item in result.json()["responses"][0]["localizedObjectAnnotations"]
+    #           if item["score"] > minScore]
+    item = result.json()['responses'][0]['localizedObjectAnnotations']
+    for i in item:
+        print(i['name'])
+        if i['score'] > minScore:
+            retArray.append(i['name'])
+    # result = [item.get('description')
+    #           for item in result.json()["responses"][0]["labelAnnotations"]
+    #           if item["score"] > minScore]
 
-    return result
+    return retArray
 
 
 def getMatchingArr(full_text, plist):
@@ -76,12 +85,12 @@ def getMatchingArr(full_text, plist):
 # make the request here
 
 def TestGround():
-    img_path = "/images/download.jpg"
+    img_path = "/images/appana.jpg"
     result = requestRecognition(img_path)
 
     print(result)
-    # matchingArr = getMatchingArr(text, ["VeGetAble Oil", "SALT", "Joe", "mama"])
-    # print(matchingArr)
+    matchingArr = getMatchingArr(result, ["VeGetAble Oil", "SALT", "Joe", "mama"])
+    print(matchingArr)
     #
     # result = requestRecognition(visionURL, key, imgpath)
     # print(result.text)

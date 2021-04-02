@@ -2,7 +2,7 @@ import requests
 import list
 
 pListUrl = "http://52.138.39.36:3000/plist"
-customIngredientsUrl = "http://52.138.39.36:3000/plist"
+customIngredientsUrl = "http://52.138.39.36:3000/search_byname"
 
 
 def Get_Personal_List(username):
@@ -18,27 +18,23 @@ def Get_Personal_List(username):
 
 
 def Get_Custom_Ingredients(item_list):
-    ingredientsList = []
-    missCounter = 0
+    ingredients = []
     errorOne = {'message': 'err plist'}
     errorTwo = {'message': None}
     for i in item_list:
-        PARAMS = {'item': i}
+        # db.collection("store").find({$or:[{"owner": req.body.to_search},{"item_name":req.body.to_search}]}).toArray(function(err,data){
+        PARAMS = {'to_search': i}
         response = requests.post(url=customIngredientsUrl, json=PARAMS)
         resJson = response.json()
-        if resJson != errorOne and resJson != errorTwo:
-            ingredientsList += resJson
-        else:
-            missCounter += 1
+        if resJson['message'] == []:
+            ingredients.append('0')
+        for field in resJson['message']:
+            if field != errorOne and field != errorTwo:
+                ingredients.append(field['item_list'])
 
-    # for element in resJson['message']:
-    #     userList.append(element["p"])
-    print(item_list)
-    print(missCounter)
-    print(len(item_list))
-    if missCounter == len(item_list):
-        return "notRecognition"
-    return ingredientsList
+    print("ingredients array")
+    print(ingredients)
+    return ingredients
 
 def Get_Harmful_List():
     return list.list

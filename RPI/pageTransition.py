@@ -7,6 +7,8 @@ import interface
 import renderingUtil
 import database
 import multiprocessing as mp
+from functools import partial
+import ctypes
 import testyboi as testy
 import time
 import Camera.camera as camera
@@ -35,14 +37,14 @@ class App(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
         self.attributes('-fullscreen', True)
 
-        canvas = tk.Canvas(self, bg=backgroundColour)
-        canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas = tk.Canvas(self, bg=backgroundColour)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
 
         # Set up Menu
         MainMenu(self)
 
         # Set up Frames
-        container = tk.Frame(canvas)
+        container = tk.Frame(self.canvas)
         container.place(relwidth=0.75, relheight=0.75, relx=0.1, rely=0.1)
         # container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
@@ -110,6 +112,11 @@ class LandingPage(tk.Frame):
 
 class CommonDisplay:
     def __init__(self, controller, parent, message, scanFunction, *args, **kwargs):
+        self.infoButtonList = []
+        self.counter = 0
+        self.itemList = [None]*20 #20 items max
+        self.ingredientsList = [None]*20
+
         readImg = renderingUtil.resizeImage("/images/Capture.jpg")
         self.img = ImageTk.PhotoImage(readImg)
         self.alert = tk.Label()
@@ -157,6 +164,12 @@ class CommonDisplay:
             self.alert = tk.Label(self, text=warning, font=('helvetica', 15))
             self.alert.pack()
 
+    # def customItemEntry(self, itemName, itemIngredients):
+    #     infoButton = tk.Button(self, text=itemName, font=('helvetica', 15), command=lambda: self.printIngredients(itemIngredients))
+    #     infoButton.pack()
+    #     self.infoButtonList.append(infoButton)
+
+
     def CheckIngredientsOCR(self, username):
         if self.noImg():
             return
@@ -168,16 +181,37 @@ class CommonDisplay:
         matchingArr = googleVision.getMatchingArr(responseOCR, userList)
         self.printIntersection("ingredients matching your personal list", matchingArr)
 
+    def printIngredients(self, subcanvas, itemIngredients, i):
+        self.ingredientsList[i] = tk.Label(subcanvas, text=itemIngredients, borderwidth=2, relief="solid", height=2,
+                                           font=('helvetica', 15))
+        self.ingredientsList[i].grid(row=i, column=1)
+
     def CheckIngredientsRecognition(self, username):
         if self.noImg():
             return
         # get the text from OCR
-        responseRec = googleVision.requestRecognition(objectImg)
-        responseRec = database.Get_Custom_Ingredients(responseRec)
-        # get user plist
+        tags_array = googleVision.requestRecognition(objectImg)
+        ingredients_array = database.Get_Custom_Ingredients(tags_array)
+
+        subcanvas = tk.Canvas(app.canvas, height=100000000)
+        subcanvas.pack(padx=(50, 50), pady=(530, 0))
+
+        # init ingredients list array
+
+        max = 0
+        for i in range(0, len(tags_array)):  # Rows
+            if ingredients_array[i] != '0':
+                ahoy = partial(self.printIngredients, subcanvas, ingredients_array[i], i)
+                self.itemList[i] = tk.Button(subcanvas, text=tags_array[i], borderwidth=2, relief="solid", height = 2, font=('helvetica', 15),
+                                            command=ahoy)
+                self.itemList[i].grid(row=i, column=0, padx=10, sticky="W")
+                if self.itemList[i].winfo_width() > max:
+                    max = self.itemList[i].winfo_width()
+                    #ingredients_list = tk.Label(subcanvas, text=ingredients_array[i], borderwidth=2, relief="solid")
+                    #ingredients_list.grid(row=i, column=1)
         userList = database.Get_Personal_List(username)
         # get the matching array
-        matchingArr = googleVision.getMatchingArr(responseRec, userList)
+        matchingArr = googleVision.getMatchingArr(ingredients_array, userList)
         self.printIntersection("ingredients matching your personal list", matchingArr)
 
     def CheckHarmfulOCR(self):
@@ -243,7 +277,7 @@ def loadProcessedImage(frame):
     global app
     renderingUtil.refresh(app.frames[frame].instruction)
     try:
-        tryOpen = Image.open(workingDir + "/images/download.jpg")
+        tryOpen = Image.open(workingDir + objectImg)
         app.frames[frame].instruction = tk.Label(app.frames[frame], text="Your item is ready to be scanned", font=('helvetica', 15))
     except OSError:
         print('cannot open')
@@ -277,7 +311,7 @@ def loadProcessedImage(frame):
 #             loadProcessedImage(RegularItems)
 #             loadProcessedImage(CustomItems)
 #             acceptNextImage = False
-
+#
 def pollPicture():
     actualPoll()
     app.after(1000, pollPicture)
@@ -308,3 +342,5 @@ if __name__ == "__main__":
     producer.start()
     ackQueue.put(True)
     app.mainloop()
+
+app.mainloop()
