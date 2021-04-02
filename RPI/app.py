@@ -52,23 +52,66 @@ class App(tk.Tk):
 
         self.frames = {}
 
-        for F in (LandingPage, RegularItems, CustomItems):
+        for F in (LandingPage, RegularItems, CustomItems, LoginPage):
             frame = F(container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
-        self.show_frame(LandingPage)
+        self.show_frame(LoginPage)
 
     def show_frame(self, context):
         frame = self.frames[context]
         frame.tkraise()
+
+class LoginPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        label = tk.Label(self, text="Welcome to Ingredients Decoder")
+        label.config(font=('helvetica', 30))
+        label.pack(padx=10, pady=10)
+
+        guest_login = tk.Button(self, text="Log in as a guest", height = 2, font=('helvetica', 15), command= lambda: self.loginAsGuest(controller))
+        guest_login.pack()
+
+        bt_login = tk.Button(self, text="Log in using bluetooth", height = 2, font=('helvetica', 15), command=lambda: self.loginBT(controller,"customer1"))
+        bt_login.pack()
+
+        self.loginStatus = tk.Label(self, text="Please log in to continue", height = 2, font=('helvetica', 15))
+        self.loginStatus.pack()
+        self.continue_button = tk.Button()
+
+    def loginAsGuest(self, controller):
+        renderingUtil.refresh(self.loginStatus)
+        self.loginStatus = tk.Label(self, text="You have successfully loged in as guest", height = 2, font=('helvetica', 15))
+        self.loginStatus.pack()
+        self.continue_button = tk.Button(self, text="Continue", height = 2, font=('helvetica', 15), command= lambda: self.continueToLanding(controller))
+        self.continue_button.pack()
+
+    def loginBT(self, controller, customerId):
+        textInput = "You have successfully loged in as " + customerId
+        renderingUtil.refresh(self.loginStatus)
+        self.loginStatus = tk.Label(self, text=textInput, height = 2, font=('helvetica', 15))
+        self.loginStatus.pack()
+        self.continue_button = tk.Button(self, text="Continue", height = 2, font=('helvetica', 15), command= lambda: self.continueToLanding(controller))
+        self.continue_button.pack()
+
+    def continueToLanding(self, controller):
+        #go to landing page
+        controller.show_frame(LandingPage)
+        #reset login status
+        renderingUtil.refresh(self.loginStatus)
+        self.loginStatus = tk.Label(self, text="Please log in to continue", height = 2, font=('helvetica', 15))
+        self.loginStatus.pack()
+        #delete continue button
+        renderingUtil.refresh(self.continue_button)
 
 
 class LandingPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
-        label = tk.Label(self, text="Welcome to Ingredients Decoder")
+        label = tk.Label(self, text="You have successfully loged in")
         label.config(font=('helvetica', 30))
         label.pack(padx=10, pady=10)
 
@@ -81,6 +124,10 @@ class LandingPage(tk.Frame):
         user_list = tk.Button(self, text="View personalized list", height = 2, font=('helvetica', 15),
                               command=lambda: self.show_plist(LandingPage, controller))
         user_list.pack()
+
+        login_page = tk.Button(self, text="Log out", height = 2, font=('helvetica', 15), command=lambda: controller.show_frame(LoginPage))
+        login_page.pack()
+
         self.user_list = tk.Label()
 
         # why gif not running~
