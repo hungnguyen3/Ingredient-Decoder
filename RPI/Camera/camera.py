@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-# import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 import time
 import serial
 #from crop import cropImage
