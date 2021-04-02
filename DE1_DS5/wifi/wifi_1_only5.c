@@ -1,5 +1,3 @@
-
-
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
@@ -26,18 +24,18 @@
 #define RS232_DivisorLatchLSB                   (*(volatile unsigned char *)(0xFF210200))
 #define RS232_DivisorLatchMSB                   (*(volatile unsigned char *)(0xFF210202))
 //...............................................................................................
-#define GPS_ReceiverFifo        				((volatile unsigned char *)(0xFF210210))
-#define GPS_TransmitterFifo     				((volatile unsigned char *)(0xFF210210))
-#define GPS_InterruptEnableReg  				((volatile unsigned char *)(0xFF210212))
-#define GPS_InterruptIdentificationReg 			((volatile unsigned char *)(0xFF210214))
-#define GPS_FifoControlReg 						((volatile unsigned char *)(0xFF210214))
-#define GPS_LineControlReg 						((volatile unsigned char *)(0xFF210216))
-#define GPS_ModemControlReg 					((volatile unsigned char *)(0xFF210218))
-#define GPS_LineStatusReg 						((volatile unsigned char *)(0xFF21021A))
-#define GPS_ModemStatusReg 						((volatile unsigned char *)(0xFF21021C))
-#define GPS_ScratchReg 							((volatile unsigned char *)(0xFF21021E))
-#define GPS_DivisorLatchLSB 					((volatile unsigned char *)(0xFF210210))
-#define GPS_DivisorLatchMSB 					((volatile unsigned char *)(0xFF210212))
+#define Wifi_ReceiverFifo        				(*(volatile unsigned char *)(0xFF210210))
+#define Wifi_TransmitterFifo     				(*(volatile unsigned char *)(0xFF210210))
+#define Wifi_InterruptEnableReg  				(*(volatile unsigned char *)(0xFF210212))
+#define Wifi_InterruptIdentificationReg 			(*(volatile unsigned char *)(0xFF210214))
+#define Wifi_FifoControlReg 						(*(volatile unsigned char *)(0xFF210214))
+#define Wifi_LineControlReg 						(*(volatile unsigned char *)(0xFF210216))
+#define Wifi_ModemControlReg 					(*(volatile unsigned char *)(0xFF210218))
+#define Wifi_LineStatusReg 						(*(volatile unsigned char *)(0xFF21021A))
+#define Wifi_ModemStatusReg 						(*(volatile unsigned char *)(0xFF21021C))
+#define Wifi_ScratchReg 							(*(volatile unsigned char *)(0xFF21021E))
+#define Wifi_DivisorLatchLSB 					(*(volatile unsigned char *)(0xFF210210))
+#define Wifi_DivisorLatchMSB 					(*(volatile unsigned char *)(0xFF210212))
 //................................................................................................
 #define Bluetooth_ReceiverFifo        			((volatile unsigned char *)(0xFF210220))
 #define Bluetooth_TransmitterFifo     			((volatile unsigned char *)(0xFF210220))
@@ -59,6 +57,14 @@ int TestForReceivedData(volatile unsigned char *);
 void Flush( volatile unsigned char *, volatile unsigned char * );
 void BTFactoryReset(void);
 void BTOutMessage(char ** Message);
+
+void init_Wifi(void);
+int putcharWifi(int c);
+void putstringWifi(char*);
+int getcharWifi(void);
+void getstringWifi(volatile char*);
+int WifiTestForReceivedData(void);
+void WifiFlush(void);
 
 void Init_RS232(void) {
 	// set bit 7 of Line Control Register to 1, to gain access to the baud rate registers
@@ -138,13 +144,6 @@ void delay(long cycles)
 
 void BTFactoryReset(void)
 {
-	// wait for 1 second between command
-	// enter these commands in upper case
-	// $$$ enter command mode
-	// SF,1 factory reset
-	// SN,Device1 set device name to “Device1”
-	// SP,1234 set 4 digit pin to “1234”
-	// R,1<CR> reboot BT controller
 	char c, Message[100] ;
 	while(1){
 		printf("\r\nEnter Message for Bluetooth Controller:") ;
@@ -234,116 +233,144 @@ int TestForReceivedData(volatile unsigned char *  LineStatusReg) {
 }
 
 // main for bluetooth
-int main(void) {
-	Init_BT();
-	Init_RS232();
-//	BTFactoryReset();
-	while(1){
-			int usernameCounter = 0;
-			int username[100];
-			// waiting for sign in from the user
-
-
-			while(1){
-				if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
-					int c = getcharBT(Bluetooth_LineStatusReg , Bluetooth_ReceiverFifo);
-					if(c != 13 && c != 10){
-						printf("received %d from the Bluetooth \n", c);
-						username[usernameCounter] = c;
-
-						if(c == 50 || c == 49){ //customer1 and customer2
-							break;
-						}
-						usernameCounter ++;
-					}
-
-				}
-			}
-
-			// send username to Raspberry Pi
-			for(int i = 0; i <= usernameCounter; i++){
-				printf("send rs232 to RPI:%d\n", username[i]);
-				putcharRS232(username[i]);
-			}
-			// do a get request for twilio
-
-	}
-
-
-//	int logout = 0;
-//	// Sonar sensor
-//	while(1){
-//		while(RS232TestForReceivedData() != 1);
-//		int distance = getcharRS232();
-//		printf("sonar received:%d\n", distance);
-//		unsigned char value = distance;
-//		unsigned char first;
-//		unsigned char second;
-//		unsigned char third;
-//		first = value%10;
-//		value = value/10;
-//		second = value%10;
-//		value = value/10;
-//		third = value%10;
-//		*HEX0_1 = first;
-//		*HEX2_3 = second;
-//		*HEX4_5 = third;
-//		if(distance < 20){
-//			*LEDS = 1023;
-//		}else{
-//			*LEDS =0;
-//		}
-//
-//		// logout logic
-//		if(logout == 5){
-//			break;
-//		}else if(distance == 200){
-//			logout++;
-//		}
-//	}
+void GPSReadMessage(char *message){
+    int length = 100;
+    int i;
+    for (i = 0; i < length; i++){
+        unsigned char byte =getcharWifi();
+        message[i] = byte;
+    }
+    message[length] = '\0';
 }
 
-//for(int i = 0; i < 255; i++){
-//	delay(100);
-//	printf("trasmit %d to the Bluetooth \n", i);
-//	putcharBT(i, Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-//}
-//
-////main for RS232 read
-//int main(void) {
-//	Init_RS232();
-//	while(1){
-//		while(RS232TestForReceivedData() != 1);
-//		int distance = getcharRS232();
-//		printf("received:%d\n", distance);
-//		unsigned char value = distance;
-//		unsigned char first;
-//		unsigned char second;
-//		unsigned char third;
-//		first = value%10;
-//		value = value/10;
-//		second = value%10;
-//		value = value/10;
-//		third = value%10;
-//		*HEX0_1 = first;
-//		*HEX2_3 = second;
-//		*HEX4_5 = third;
-//		if(distance < 20){
-//			*LEDS = 1023;
-//		}
-//		else{
-//			*LEDS =0;
-//		}
-//	}
-//}
+void ParseGGA(char *message){
+    int j = 0;
+    while (message[j] != '\n'){
+        j++;
+    }
+    message[j] = '\0';
+}
+void getGGA(char *message){
+    GPSReadMessage(message);
+    ParseGGA(message);
+}
 
-// main for RS232 write
-//void main(){
-//	Init_RS232();
-//	int i;
-//	for(i = 0; i < 255; i ++) {
-//		printf("send rs232 num is:%d\n", i);
-//		putcharRS232(i);
-//	}
-//}
+
+int main(void) {
+	//wifi module...............................................
+
+    init_Wifi();
+    // enter the lua mode
+    putcharWifi('\r');
+    putcharWifi('\n');
+
+    // send a GET request
+    putstringWifi("wifi.sta.config('TP-LINK_888','12345687')");
+    putstringWifi("wifi.sta.connect()");
+    putstringWifi("tmr.delay(1000000)");
+    putstringWifi("print(wifi.sta.status())");
+
+    printf("\nprint 5 here\n");
+
+    volatile char c;
+    for(int i = 0; i < 4000000; i ++) {
+		if(WifiTestForReceivedData() == 1) {
+			c = getcharWifi();
+			printf("%c", c);
+			i=0;
+		}
+    }
+
+    putstringWifi("print(wifi.sta.getip())");
+    putstringWifi("sk=net.createConnection(net.TCP, 0)");
+    putstringWifi("sk:on('receive', function(sck, c) print(c) end )");
+    putstringWifi("sk:connect(3000,'52.138.39.36')");
+    putstringWifi("sk:send('GET /sms\r\nConnection: keep-alive\r\nAccept: */*\r\n\r\n')");
+
+    //volatile char Char = getcharWifi();
+    //printf("received %c\n", Char);
+    WifiFlush();
+	for(int i = 0; i < 4000000; i ++) {
+		if(WifiTestForReceivedData() == 1) {
+			c = getcharWifi();
+			printf("%c", c);
+			i=0 ;
+		}
+	}
+    while(1){
+    	printf("here it is\n");
+    }
+
+void init_Wifi(void) {
+	// set bit 7 of Line Control Register to 1, to gain access to the baud rate registers
+	unsigned char line_control_register= Wifi_LineControlReg;
+	line_control_register = line_control_register |  0x80;
+	Wifi_LineControlReg= line_control_register;
+	// set Divisor latch (LSB and MSB) with correct value for required baud rate
+	int divisor = (int) ((50E6)/(115200 *16));
+	Wifi_DivisorLatchLSB = divisor & 0xff;
+	Wifi_DivisorLatchMSB = (divisor >> 8) & 0xff;
+
+	// set bit 7 of Line control register back to 0 and
+	// program other bits in that reg for 8 bit data,
+	// 1 stop bit, no parity etc
+	Wifi_LineControlReg= 0x03;
+	// Reset the Fifo’s in the FiFo Control Reg by setting bits 1 & 2
+	Wifi_FifoControlReg = Wifi_FifoControlReg | 0x06;
+	// Now Clear all bits in the FiFo control registers
+	Wifi_FifoControlReg = Wifi_FifoControlReg ^  0x06;
+}
+
+int putcharWifi(int c) {
+    while((Wifi_LineStatusReg & 0x20)!= 0x20){}
+    Wifi_TransmitterFifo = c;
+    return c;
+}
+
+void putstringWifi(char* string){
+    int i;
+    for(i = 0; i < strlen(string); i++){
+        putcharWifi(string[i]);
+    }
+
+    putcharWifi('\r');
+    putcharWifi('\n');
+
+}
+
+int getcharWifi(void) {
+	while ((Wifi_LineStatusReg & 1) == 0){}
+	return Wifi_ReceiverFifo;
+}
+
+void getstringWifi(volatile char* buff){
+    buff[0] = getcharWifi();
+    volatile int i = 1;
+    while ((Wifi_LineStatusReg & 1)){
+        buff[i] = Wifi_ReceiverFifo;
+        i++;
+        }
+    buff[i] = '\0';
+}
+
+int WifiTestForReceivedData(void) {
+	if((Wifi_LineStatusReg & 0x01)== 0x01){
+		return 1;
+	}
+	else{
+		return 0;
+	}
+}
+
+void WifiFlush(void) {
+    volatile int dummy = 0;
+    while(Wifi_LineStatusReg & 1) {
+        dummy += Wifi_ReceiverFifo;
+    }
+    return;
+}
+
+
+
+
 
