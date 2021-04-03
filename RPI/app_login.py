@@ -12,6 +12,7 @@ import ctypes
 import testyboi as testy
 import time
 import Camera.camera as camera
+import Camera.camera2 as camera2
 import cv2
 
 #cap = cv2.VideoCapture(0)
@@ -30,6 +31,8 @@ objectImg = "/images/download.jpg"
 buffer = None
 imageQueue = mp.Queue()
 ackQueue = mp.Queue()
+customerIdQueue = mp.Queue()
+loginSuccessQueue = mp.Queue()
 
 
 class App(tk.Tk):
@@ -351,6 +354,15 @@ def loadProcessedImage(frame):
     app.frames[frame].promptLabel = tk.Label(app.frames[frame], image=app.frames[frame].img)
     app.frames[frame].promptLabel.pack()
 
+def bluetoothLogin(frame, customerId):
+    global app
+    renderingUtil.refresh(app.frames[frame].loginStatus)
+    textInput = "you have successfully loged in as " + customerId
+    app.frames[frame].loginStatus = tk.Label(app.frames[frame], text=textInput, height = 2, font=('helvetica', 15))
+    app.frames[frame].loginStatus.pack()
+    renderingUtil.refresh(app.frames[frame].continue_button)
+    app.frames[frame].continue_button = tk.Button(app.frames[frame], text="Continue", height = 2, font=('helvetica', 15), command= lambda: app.frames[frame].continueToLanding())
+    app.frames[frame].continue_button.pack()
 
 # def pollPicture():
 #     app.after(1000, pollPicture)
@@ -378,10 +390,13 @@ def pollPicture():
 
 
 def actualPoll():
+    global app
     global acceptNextImage
     global objectImg
     global imageQueue
     global ackQueue
+    global loginSuccess
+    global customerId
     if not imageQueue.empty():
         print("not empty")
         imageQueue.get()
@@ -391,6 +406,14 @@ def actualPoll():
             # acceptNextImage = False
         ackQueue.put(True)
 
+    if not loginSuccessQueue.empty():
+        success = loginSuccessQueue.get()
+        if success == True:
+            customerId = customerIdQueue.get()
+            bluetoothLogin(LoginPage, customerId)
+        #else:
+        #    renderingUtil.refresh(app.frames[LoginPage].continue_button)
+
 
 # def pollPicture():
 #     app.after(1000, pollPicture)
@@ -398,7 +421,8 @@ def actualPoll():
 
 app.after(3000, pollPicture)
 if __name__ == "__main__":
-    producer = mp.Process(target=camera.run, args=(imageQueue, ackQueue))
+    #producer = mp.Process(target=camera.run, args=(imageQueue, ackQueue))
+    producer = mp.Process(target=camera2.run, args=(customerIdQueue, loginSuccessQueue))
     producer.start()
     ackQueue.put(True)
     app.mainloop()
