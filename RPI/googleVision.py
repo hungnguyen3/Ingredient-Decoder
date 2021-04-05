@@ -3,7 +3,6 @@ import os
 import base64
 import requests
 import json
-import debugUtil
 
 # current working directory
 workingDir = os.path.dirname(os.path.abspath(__file__))

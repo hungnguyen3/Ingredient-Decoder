@@ -131,7 +131,8 @@ class LandingPage(tk.Frame):
         self.user_list = tk.Label()
 
         # why gif not running~
-        self.img = ImageTk.PhotoImage(Image.open(workingDir + "/images/cat.gif"))
+        readImg = renderingUtil.resizeImage("/images/cat.gif")
+        self.img = ImageTk.PhotoImage(readImg)
         welcomeImg = tk.Label(self, image=self.img)
         welcomeImg.pack()
 
