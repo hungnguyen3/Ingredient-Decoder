@@ -14,8 +14,6 @@ import time
 import Camera.camera as camera
 import cv2
 
-#cap = cv2.VideoCapture(0)
-
 # import functions and classes
 import googleVision
 
@@ -136,9 +134,6 @@ class LandingPage(tk.Frame):
         self.img = ImageTk.PhotoImage(Image.open(workingDir + "/images/cat.gif"))
         welcomeImg = tk.Label(self, image=self.img)
         welcomeImg.pack()
-        # testy = tk.Button(self, text="Testy boi",
-        #                   command=lambda: controller.google_vision("/images/sushiOut.bmp", googleVision.requestRecognition))
-        # testy.pack()
 
     def show_plist(self, context, controller):
         URL = "http://52.138.39.36:3000/plist"
@@ -189,10 +184,6 @@ class CommonDisplay:
         self.promptLabel = tk.Label(self, image=self.img)
         self.promptLabel.pack()
 
-        #self.checkNewItem = tk.Button(self, text="Click here to check another item", height = 2, font=('helvetica', 15),
-        #                              command=lambda: self.MakeAcceptNextImage())
-        #self.checkNewItem.pack()
-
     def backToHomePage(self, controller):
         for i in self.itemList:
             if i != None:
@@ -224,11 +215,6 @@ class CommonDisplay:
             warning = warning[:-2]
             self.alert = tk.Label(self, text=warning, font=('helvetica', 15))
             self.alert.pack()
-
-    # def customItemEntry(self, itemName, itemIngredients):
-    #     infoButton = tk.Button(self, text=itemName, font=('helvetica', 15), command=lambda: self.printIngredients(itemIngredients))
-    #     infoButton.pack()
-    #     self.infoButtonList.append(infoButton)
 
 
     def CheckIngredientsOCR(self, username):
@@ -351,27 +337,6 @@ def loadProcessedImage(frame):
     app.frames[frame].promptLabel = tk.Label(app.frames[frame], image=app.frames[frame].img)
     app.frames[frame].promptLabel.pack()
 
-
-# def pollPicture():
-#     app.after(1000, pollPicture)
-#
-#     global pictureExists
-#     global newPicture
-#     global buffer
-#     global acceptNextImage
-#     global objectImg
-#     pictureExists, img, newPicture = interface.takeImage()  # sets newPicture to false after first call
-#
-#     if pictureExists and newPicture:
-#         buffer = img
-#
-#         if acceptNextImage:
-#             objectImg = buffer
-#             print(objectImg)
-#             loadProcessedImage(RegularItems)
-#             loadProcessedImage(CustomItems)
-#             acceptNextImage = False
-#
 def pollPicture():
     actualPoll()
     app.after(1000, pollPicture)
@@ -390,11 +355,6 @@ def actualPoll():
             loadProcessedImage(CustomItems)
             # acceptNextImage = False
         ackQueue.put(True)
-
-
-# def pollPicture():
-#     app.after(1000, pollPicture)
-#     print("uwu")
 
 app.after(3000, pollPicture)
 if __name__ == "__main__":

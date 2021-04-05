@@ -140,13 +140,6 @@ void delay(long cycles)
 
 void BTFactoryReset(void)
 {
-	// wait for 1 second between command
-	// enter these commands in upper case
-	// $$$ enter command mode
-	// SF,1 factory reset
-	// SN,Device1 set device name to “Device1”
-	// SP,1234 set 4 digit pin to “1234”
-	// R,1<CR> reboot BT controller
 	char c, Message[100] ;
 	while(1){
 		printf("\r\nEnter Message for Bluetooth Controller:") ;
@@ -276,15 +269,6 @@ void send_code(char * Message, char * temp){
 }
 void WFFactoryReset (void)
 {
-    // wait for 1 second between command
-    // enter these commands in upper case
-    // $$$ enter command mode
-    // SF,1 factory reset
-    // SN,Device1 set device name to “Device1”
-    // SP,1234 set 4 digit pin to “1234”
-    // R,1<CR> reboot BT controller
-
-
     char Message1[100]= "wifi.sta.config('TP-LINK_888','12345687')";
 	char Message2[100]= "wifi.sta.connect()";
 	char Message3[100]= "tmr.delay(1000000)";
@@ -411,81 +395,3 @@ int main(void) {
 		    WFFactoryReset();
 
 	}
-
-
-//	int logout = 0;
-//	// Sonar sensor
-//	while(1){
-//		while(RS232TestForReceivedData() != 1);
-//		int distance = getcharRS232();
-//		printf("sonar received:%d\n", distance);
-//		unsigned char value = distance;
-//		unsigned char first;
-//		unsigned char second;
-//		unsigned char third;
-//		first = value%10;
-//		value = value/10;
-//		second = value%10;
-//		value = value/10;
-//		third = value%10;
-//		*HEX0_1 = first;
-//		*HEX2_3 = second;
-//		*HEX4_5 = third;
-//		if(distance < 20){
-//			*LEDS = 1023;
-//		}else{
-//			*LEDS =0;
-//		}
-//
-//		// logout logic
-//		if(logout == 5){
-//			break;
-//		}else if(distance == 200){
-//			logout++;
-//		}
-//	}
-}
-
-//for(int i = 0; i < 255; i++){
-//	delay(100);
-//	printf("trasmit %d to the Bluetooth \n", i);
-//	putcharBT(i, Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-//}
-//
-////main for RS232 read
-//int main(void) {
-//	Init_RS232();
-//	while(1){
-//		while(RS232TestForReceivedData() != 1);
-//		int distance = getcharRS232();
-//		printf("received:%d\n", distance);
-//		unsigned char value = distance;
-//		unsigned char first;
-//		unsigned char second;
-//		unsigned char third;
-//		first = value%10;
-//		value = value/10;
-//		second = value%10;
-//		value = value/10;
-//		third = value%10;
-//		*HEX0_1 = first;
-//		*HEX2_3 = second;
-//		*HEX4_5 = third;
-//		if(distance < 20){
-//			*LEDS = 1023;
-//		}
-//		else{
-//			*LEDS =0;
-//		}
-//	}
-//}
-
-// main for RS232 write
-//void main(){
-//	Init_RS232();
-//	int i;
-//	for(i = 0; i < 255; i ++) {
-//		printf("send rs232 num is:%d\n", i);
-//		putcharRS232(i);
-//	}
-//}

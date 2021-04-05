@@ -91,11 +91,5 @@ def TestGround():
     print(result)
     matchingArr = getMatchingArr(result, ["VeGetAble Oil", "SALT", "Joe", "mama"])
     print(matchingArr)
-    #
-    # result = requestRecognition(visionURL, key, imgpath)
-    # print(result.text)
-    # li = [item.get('description') for item in result.json()["responses"][0]["labelAnnotations"]]
-    # print(li)
-
 
 # TestGround()
