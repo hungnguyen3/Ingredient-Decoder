@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
@@ -11,6 +10,7 @@
 #define HEX2_3      (volatile unsigned int *)(0xFF200040)
 #define HEX4_5      (volatile unsigned int *)(0xFF200050)
 //----------------------------------------------------------------------------------------------
+//the memory address of rs232
 #define RS232_ReceiverFifo         				(*(volatile unsigned char *)(0xFF210200))
 #define RS232_TransmitterFifo      				(*(volatile unsigned char *)(0xFF210200))
 #define RS232_InterruptEnableReg   				(*(volatile unsigned char *)(0xFF210202))
@@ -21,10 +21,10 @@
 #define RS232_LineStatusReg                     (*(volatile unsigned char *)(0xFF21020A))
 #define RS232_ModemStatusReg                    (*(volatile unsigned char *)(0xFF21020C))
 #define RS232_ScratchReg                        (*(volatile unsigned char *)(0xFF21020E))
-
 #define RS232_DivisorLatchLSB                   (*(volatile unsigned char *)(0xFF210200))
 #define RS232_DivisorLatchMSB                   (*(volatile unsigned char *)(0xFF210202))
 //...............................................................................................
+// the memory address of wifi
 #define WiFi_Offset                        (volatile unsigned char *)(0x00000010)
 #define WiFi_ReceiverFifo                  (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_ReceiverFifo))
 #define WiFi_TransmitterFifo               (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_TransmitterFifo))
@@ -39,6 +39,7 @@
 #define WiFi_DivisorLatchLSB               (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_DivisorLatchLSB))
 #define WiFi_DivisorLatchMSB               (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_DivisorLatchMSB))
 //................................................................................................
+//the memory address of bluetooth
 #define Bluetooth_ReceiverFifo        			((volatile unsigned char *)(0xFF210220))
 #define Bluetooth_TransmitterFifo     			((volatile unsigned char *)(0xFF210220))
 #define Bluetooth_InterruptEnableReg  			((volatile unsigned char *)(0xFF210222))
@@ -176,9 +177,11 @@ void BTFactoryReset(void)
 	}
 }
 
+//give an array of message, print each char of this array one by one
 void BTOutMessage(char ** Message) {
 	int iterator=0;
 	while(iterator<100 || Message[iterator]!= NULL){
+		//continue print if the length is not exceed 100 or the message is end
 		printf("%c", Message[iterator] );
 		iterator ++;
 	}
@@ -235,18 +238,26 @@ int TestForReceivedData(volatile unsigned char *  LineStatusReg) {
 	}
 }
 
-//wifi.......................................................................
-
+//wifi module
 
 void WFOutMessage (char * Message){
     int i;
-    for(i = 0; Message[i] != '\0'; i++) { putcharWF(Message[i]);}
+    //enter an array of message we need to send, send it one char by one char
+    for(i = 0; Message[i] != '\0'; i++){
+    	putcharWF(Message[i]);
+    }
 }
-void WF_Flush (void)
-{
+//Waits for the transmission of outgoing serial data to complete.
+void WF_Flush (void){
     volatile int temp = 0;
-    while(WiFi_LineStatusReg & 1) {temp = WiFi_ReceiverFifo;}
+
+    while(WiFi_LineStatusReg & 1) {
+    	//check whether the wifi finish sending the data
+    	temp = WiFi_ReceiverFifo;
+    	//this is just prevent the while loop break
+    }
     return;
+    //return if the wifi chip finish sending the data
 }
 
 //#include <io.h>
@@ -258,8 +269,8 @@ void send_code(char * Message, char * temp){
 	printf("\r\nhere wifi send");
 	WFOutMessage(Message) ; // write string to BT device
 
-	// if the command string was NOT "$$$" send \r\n
-	if(strcmp(Message, "$$$") != 0) { // $$$ puts BT module into command mode
+	// if the command string was NOT "$$$" send \r\n to simulate click "enter" button to send the script
+	if(strcmp(Message, "$$$") != 0) {
 		putcharWF('\r') ;
 		putcharWF('\n') ;
 	}
@@ -276,29 +287,29 @@ void send_code(char * Message, char * temp){
 }
 void WFFactoryReset (void)
 {
-    // wait for 1 second between command
-    // enter these commands in upper case
-    // $$$ enter command mode
-    // SF,1 factory reset
-    // SN,Device1 set device name to “Device1”
-    // SP,1234 set 4 digit pin to “1234”
-    // R,1<CR> reboot BT controller
 
-
+	//put lua lines into Message array
     char Message1[100]= "wifi.sta.config('TP-LINK_888','12345687')";
 	char Message2[100]= "wifi.sta.connect()";
+	//link the wifi first
 	char Message3[100]= "tmr.delay(1000000)";
 	char Message4[100]= "print(wifi.sta.status())";
 	char Message5[100]= "print(wifi.sta.getip())";
+	//print the ip address itself to check whether it connects the wifi successfully
 	char Message6[100]= "sk=net.createConnection(net.TCP, 0)";
 	char Message7[100]= "sk:on('receive', function(sck, c) print(c) end )";
+	//print the receive the message
 	char Message8[100]= "sk:connect(3000,'52.138.39.36')";
+	//the ip address of the backend of the app
 	char Message9[100]= "sk:send('GET /sms\\r\\nConnection: keep-alive\\r\\nAccept: */*\\r\\n\\r\\n')";
+	//send the request to the backend
     char temp[20]= "\r\n";
+    //the "enter" signal
 
     send_code(temp, temp);
-	send_code(temp, temp);
-	send_code(Message1, temp);
+    send_code(temp, temp);
+    //simulate click the "enter" button twice to make sure the wifi chip is ready for enter the lua script
+    send_code(Message1, temp);
     send_code(Message2, temp);
     send_code(Message3, temp);
     send_code(Message4, temp);
@@ -307,75 +318,66 @@ void WFFactoryReset (void)
     send_code(Message7, temp);
     send_code(Message8, temp);
     send_code(Message9, temp);
+    //enter the lua script, click the "enter" button after each line of the script
     send_code(temp, temp);
-
-
-
-
-
-    // put lua lines into Message array
-
-
+    //click the "enter" button at finally
 
 }
 
-int testWF (void)
-{
+//test whether it is receiving the data or not
+int testWF (void){
     if((WiFi_LineStatusReg & 1)){
         return 1;
     }
     return 0;
 }
 
-void Init_WF (void)
-{
+void Init_WF (void){
 	WiFi_LineControlReg = 0x80;
+
+	//set the baud rate here
     int divisor = (int) ((50E6)/(115200 *16));
     WiFi_DivisorLatchLSB = divisor & 0xff;
     WiFi_DivisorLatchMSB = (divisor >> 8) & 0xff;
 
+    //set the data bits and stop bits here
     WiFi_LineControlReg = 0x33;
     WiFi_FifoControlReg = 0x6;
     WiFi_FifoControlReg = 0;
 }
 
-int putcharWF (int  c)
-{
+int putcharWF (int  c){
 	while((WiFi_LineStatusReg & 0x20) != 0x20){
+		// prevent the while loop break. also prove the code is still writing to the wifi chip
 		printf("waiting\r\n");
 	};
     //while( ((WiFi_LineStatusReg >> 5) & 1) == 0){}
+	//write the data into the WiFi_TransmitterFifo to transmit data
     WiFi_TransmitterFifo = c;
     return c;
 }
 
-int getcharWF (void)
-{
-    // wait for Data Ready bit (0) of line status register to be '1'
+int getcharWF (void){
+    // wait for WiFi_LineStatusReg to be '1'.
+	//WiFi_ReceiverFifo is valid if WiFi_LineStatusReg is "1".
     while ( (WiFi_LineStatusReg & 1) == 0){}
 
-    // read new character from ReceiverFiFo register
+    // return the value of WiFi_LineStatusReg
     return WiFi_ReceiverFifo;
 }
 
-// the following function polls the UART to determine if any character
-// has been received. It doesn't wait for one, or read it, it simply tests
-// to see if one is available to read from the FIFO
-int WF_TestForReceivedData (void)
-{
-    // if WiFi LineStatusReg bit 0 is set to 1
+//test whether the wifi receive the data
+int WF_TestForReceivedData (void){
+    // receive the data if WiFi LineStatusReg bit 0 is 1.
+	//then return 1
     return (WiFi_LineStatusReg & 1);
 }
-
-//....................................................................
-
-
 
 
 
 int main(void) {
 
-//......................................................................................
+
 	Init_BT();
 	Init_RS232();
 //	BTFactoryReset();
@@ -394,6 +396,8 @@ int main(void) {
 
 						if(c == 50 || c == 49){ //customer1 and customer2
 							break;
+							// if it is end with 1 or 2 break the loop go to send the message to raspberry pi
+							//and send requests through wifi chip
 						}
 						usernameCounter ++;
 					}
@@ -401,91 +405,24 @@ int main(void) {
 				}
 			}
 
-			// send username to Raspberry Pi
+			// send username to Raspberry Pi through rs232
 			for(int i = 0; i <= usernameCounter; i++){
 				printf("send rs232 to RPI:%d\n", username[i]);
 				putcharRS232(username[i]);
 			}
 
+			//send the request through the wifi chip
 			Init_WF();
 		    WFFactoryReset();
 
 	}
 
-
-//	int logout = 0;
-//	// Sonar sensor
-//	while(1){
-//		while(RS232TestForReceivedData() != 1);
-//		int distance = getcharRS232();
-//		printf("sonar received:%d\n", distance);
-//		unsigned char value = distance;
-//		unsigned char first;
-//		unsigned char second;
-//		unsigned char third;
-//		first = value%10;
-//		value = value/10;
-//		second = value%10;
-//		value = value/10;
-//		third = value%10;
-//		*HEX0_1 = first;
-//		*HEX2_3 = second;
-//		*HEX4_5 = third;
-//		if(distance < 20){
-//			*LEDS = 1023;
-//		}else{
-//			*LEDS =0;
-//		}
-//
-//		// logout logic
-//		if(logout == 5){
-//			break;
-//		}else if(distance == 200){
-//			logout++;
-//		}
-//	}
 }
 
-//for(int i = 0; i < 255; i++){
-//	delay(100);
-//	printf("trasmit %d to the Bluetooth \n", i);
-//	putcharBT(i, Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-//}
-//
-////main for RS232 read
-//int main(void) {
-//	Init_RS232();
-//	while(1){
-//		while(RS232TestForReceivedData() != 1);
-//		int distance = getcharRS232();
-//		printf("received:%d\n", distance);
-//		unsigned char value = distance;
-//		unsigned char first;
-//		unsigned char second;
-//		unsigned char third;
-//		first = value%10;
-//		value = value/10;
-//		second = value%10;
-//		value = value/10;
-//		third = value%10;
-//		*HEX0_1 = first;
-//		*HEX2_3 = second;
-//		*HEX4_5 = third;
-//		if(distance < 20){
-//			*LEDS = 1023;
-//		}
-//		else{
-//			*LEDS =0;
-//		}
-//	}
-//}
 
-// main for RS232 write
-//void main(){
-//	Init_RS232();
-//	int i;
-//	for(i = 0; i < 255; i ++) {
-//		printf("send rs232 num is:%d\n", i);
-//		putcharRS232(i);
-//	}
-//}
+
+
+
+
+
+
