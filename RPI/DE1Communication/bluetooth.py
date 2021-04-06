@@ -5,6 +5,7 @@ ser = serial.Serial('/dev/rfcomm0', 115200)
 if ser.isOpen == False:
     ser.open()
 
+# Transmitting signals to DE1-SoC using Bluetooth serial connection
 while(1):
     for count in range(0,51):
         #time.sleep(0.02)
@@ -13,6 +14,7 @@ while(1):
         #print("data is" + str(data))
         ser.write(data)
 
+# Reading signals from DE1-SoC using Bluetooth serial connection
 while(1):
     size = ser.inWaiting()
     if size != 0:

@@ -3,6 +3,7 @@ import time
 
 ser = serial.Serial('/dev/ttyAMA0', 115200)
 
+# Reading signals from DE1-SoC using RS232 serial connection
 if ser.isOpen == False:
     ser.open()
 try:
@@ -12,9 +13,5 @@ try:
             print("here")
             response = ser.read(1)
             print(response)
-            #ser.flushOutput()
-            #ser.write(b"9")
-            #time.sleep(0.1)
-            #ser.flushInput()
 except KeyboardInterrupt:
     ser.close()

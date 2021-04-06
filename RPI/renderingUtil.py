@@ -3,6 +3,8 @@ import os
 import math
 workingDir = os.path.dirname(os.path.abspath(__file__))
 
+# this function take in an image and resize the image to be smaller than 400x400
+# this helps putting the image onto the touchscreen app
 def resizeImage(relative_path):
     try:
         readImg = Image.open(workingDir + relative_path)
@@ -20,6 +22,6 @@ def resizeImage(relative_path):
     readImg = readImg.resize((width, height), Image.ANTIALIAS)
     return readImg
 
-
+# function to delete a tkinter label
 def refresh(label):
     label.destroy()

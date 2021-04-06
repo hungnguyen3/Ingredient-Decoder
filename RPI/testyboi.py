@@ -13,7 +13,6 @@ workingDir = os.path.dirname(os.path.abspath(__file__))
 
 
 def produceImage(outputQ, ackQ):
-
     global img
     takeNew = False
     while True:
