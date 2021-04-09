@@ -57,10 +57,6 @@ int putcharBT (int , volatile unsigned char *,  volatile unsigned char *);
 int getcharBT( volatile unsigned char *,  volatile unsigned char *);
 int TestForReceivedData(volatile unsigned char *);
 void Flush( volatile unsigned char *, volatile unsigned char * );
-void BTFactoryReset(void);
-void BTOutMessage(char ** Message);
-
-
 
 void Init_RS232(void) {
 	// set bit 7 of Line Control Register to 1, to gain access to the baud rate registers
@@ -138,45 +134,6 @@ void delay(long cycles)
         now = clock();
 }
 
-void BTFactoryReset(void)
-{
-	char c, Message[100] ;
-	while(1){
-		printf("\r\nEnter Message for Bluetooth Controller:") ;
-		gets(Message); // get command string from user keyboard
-
-		printf("The Message is:%s\n", Message);
-
-		int iterator= 0;
-		while (Message[iterator] != '\0') {
-			putcharBT(Message[iterator], Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-			iterator++;
-		}
-
-		if(strcmp(Message, "$$$") != 0) {
-  		  	  putcharBT('\r', Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-  		  	  putcharBT('\n',  Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo );
-		}
-		// now read back acknowledge string from device and display on console,
-		// will timeout after no communication for about 2 seconds
-		for(int i = 0; i < 4000000; i ++) {
-			if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
-				c = getcharBT(Bluetooth_LineStatusReg ,   Bluetooth_ReceiverFifo);
-				printf("%c", c);
-				i=0 ;
-			}
-		}
-	}
-}
-
-void BTOutMessage(char ** Message) {
-	int iterator=0;
-	while(iterator<100 || Message[iterator]!= NULL){
-		printf("%c", Message[iterator] );
-		iterator ++;
-	}
-}
-
 void Init_BT(void) {
 	// set bit 7 of Line Control Register to 1, to gain access to the baud rate registers
 	unsigned char line_control_register= *Bluetooth_LineControlReg;
@@ -228,31 +185,28 @@ int TestForReceivedData(volatile unsigned char *  LineStatusReg) {
 	}
 }
 
-//wifi.......................................................................
-
-
 void WFOutMessage (char * Message){
     int i;
     for(i = 0; Message[i] != '\0'; i++) { putcharWF(Message[i]);}
 }
+
+// flush the data in the receiverIO of the wifi module
 void WF_Flush (void)
 {
     volatile int temp = 0;
-    while(WiFi_LineStatusReg & 1) {temp = WiFi_ReceiverFifo;}
+    while(WiFi_LineStatusReg & 1) {
+		temp = WiFi_ReceiverFifo;
+	}
     return;
 }
 
-//#include <io.h>
-
 void send_code(char * Message, char * temp){
 	printf("\r\nEnter Message for WiFi Controller: ") ;
-//	gets(Message); // get command string from user keyboard
-//	gets(temp);
 	printf("\r\nhere wifi send");
 	WFOutMessage(Message) ; // write string to BT device
 
 	// if the command string was NOT "$$$" send \r\n
-	if(strcmp(Message, "$$$") != 0) { // $$$ puts BT module into command mode
+	if(strcmp(Message, "$$$") != 0) {
 		putcharWF('\r') ;
 		putcharWF('\n') ;
 	}
@@ -267,8 +221,11 @@ void send_code(char * Message, char * temp){
 		}
 	}
 }
+
 void WFFactoryReset (void)
 {
+	// lua code to send a get request to backend
+	// this backend API will send a request to the Twilio SMS API 
     char Message1[100]= "wifi.sta.config('TP-LINK_888','12345687')";
 	char Message2[100]= "wifi.sta.connect()";
 	char Message3[100]= "tmr.delay(1000000)";
@@ -280,6 +237,7 @@ void WFFactoryReset (void)
 	char Message9[100]= "sk:send('GET /sms\\r\\nConnection: keep-alive\\r\\nAccept: */*\\r\\n\\r\\n')";
     char temp[20]= "\r\n";
 
+	// enter lua script into RFS's wifi board
     send_code(temp, temp);
 	send_code(temp, temp);
 	send_code(Message1, temp);
@@ -292,17 +250,9 @@ void WFFactoryReset (void)
     send_code(Message8, temp);
     send_code(Message9, temp);
     send_code(temp, temp);
-
-
-
-
-
-    // put lua lines into Message array
-
-
-
 }
 
+// check if wifi module 
 int testWF (void)
 {
     if((WiFi_LineStatusReg & 1)){
@@ -311,6 +261,8 @@ int testWF (void)
     return 0;
 }
 
+// initialize wifi module
+// 115200 baud rate
 void Init_WF (void)
 {
 	WiFi_LineControlReg = 0x80;
@@ -319,20 +271,22 @@ void Init_WF (void)
     WiFi_DivisorLatchMSB = (divisor >> 8) & 0xff;
 
     WiFi_LineControlReg = 0x33;
-    WiFi_FifoControlReg = 0x6;
+	// Reset the Fifo’s in the FiFo Control Reg by setting bits 1 & 2
+    WiFi_FifoControlReg = 0x06;
     WiFi_FifoControlReg = 0;
 }
 
+// send char to wifi module
 int putcharWF (int  c)
 {
 	while((WiFi_LineStatusReg & 0x20) != 0x20){
 		printf("waiting\r\n");
 	};
-    //while( ((WiFi_LineStatusReg >> 5) & 1) == 0){}
     WiFi_TransmitterFifo = c;
     return c;
 }
 
+// get result from wifi
 int getcharWF (void)
 {
     // wait for Data Ready bit (0) of line status register to be '1'
@@ -351,24 +305,18 @@ int WF_TestForReceivedData (void)
     return (WiFi_LineStatusReg & 1);
 }
 
-//....................................................................
-
-
-
-
-
+// this main function waits for a customer ID from an android app
+// when received the customer ID, send a get request to the back end
+// the backend will send a Twilio SMS message
 int main(void) {
-
-//......................................................................................
 	Init_BT();
 	Init_RS232();
-//	BTFactoryReset();
+
 	while(1){
 			int usernameCounter = 0;
 			int username[100];
-			// waiting for sign in from the user
 
-
+			// waiting for sign in customer ID from the user
 			while(1){
 				if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
 					int c = getcharBT(Bluetooth_LineStatusReg , Bluetooth_ReceiverFifo);
@@ -391,6 +339,7 @@ int main(void) {
 				putcharRS232(username[i]);
 			}
 
+			// send Twilio SMS messages
 			Init_WF();
 		    WFFactoryReset();
 
