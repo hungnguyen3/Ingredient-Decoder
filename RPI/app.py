@@ -21,12 +21,23 @@ import googleVision
 workingDir = os.path.dirname(os.path.abspath(__file__))
 backgroundColour = "#263D42"
 
-# global variables used between multiple processes
+# variables for communicating between processes
+"""
+Protocol:
+    Camera process polls sonar, and takes picture. writes picture to directory. puts notification in queue
+    
+    This process checks queue, if set reads image and puts acknowledgement in queue
+    
+    once acknowledgement read, Camera process may take a new picture.
+
+"""
 pictureExists = False
 newPicture = False
 acceptNextImage = True
 objectImg = "/images/download.jpg"
 buffer = None
+
+# queues to pass messages between processes
 imageQueue = mp.Queue()
 ackQueue = mp.Queue()
 
@@ -160,15 +171,21 @@ class LandingPage(tk.Frame):
         self.user_list = tk.Label(controller.frames[context], text='Here is your list: ' + str1, font=('helvetica', 15))
         self.user_list.pack(padx=10, pady=10)
 
-# class CommonDisplay is a common generic page
-# both RegularItems and CustomItems classes would inherit from this class.
-# it contains several buttons and labels displayed back to the users
+"""
+class CommonDisplay is a common generic page
+both RegularItems and CustomItems classes would inherit from this class.
+it contains several buttons and labels displayed back to the users
+
+they differ in which recognition function they call: thus this function is passed in instantiation of sub-classes
+"""
 class CommonDisplay:
     def __init__(self, controller, parent, message, scanFunction, *args, **kwargs):
         self.infoButtonList = []
         self.counter = 0
         self.itemList = [None]*20 #20 items max
         self.ingredientsList = [None]*20
+
+        #subcanvas for rendering ingredients list
         self.subcanvas = tk.Canvas()
 
         readImg = renderingUtil.resizeImage("/images/Capture.jpg")
@@ -205,19 +222,24 @@ class CommonDisplay:
         controller.show_frame(LandingPage)
 
     # print out the intersection between the ingredients received from google API and user's personal list
+    # accounts for special cases
     def printIntersection(self, warning, matchingArr):
         renderingUtil.refresh(self.alert)
+        # tried to scan non-existent words
         if matchingArr == "notOCR":
             self.alert = tk.Label(self, text="No ingredients text detected", font=('helvetica', 15))
             self.alert.pack()
             return
+        # item does not exist as a custom item. Prompted to scan printed ingredients
         if matchingArr == "notRecognition":
             self.alert = tk.Label(self, text="Not recognized as a store custom item. Maybe try regular item instead?", font=('helvetica', 15))
             self.alert.pack()
             return
+        # no match: no harmful ingredients
         if not matchingArr:
             self.alert = tk.Label(self, text="No harmful ingredients detected", font=('helvetica', 15))
             self.alert.pack()
+        # found harmful ingredients
         else:
             warning = "We found the following " + warning + " that you might not want: \n "
             for element in matchingArr:
@@ -236,6 +258,7 @@ class CommonDisplay:
         self.printIntersection("ingredients matching your personal list", matchingArr)
 
     # print out the ingredients of the corresponding custom item
+    # may have to render lists for multiple potential items (if recognized as several custom items)
     def printIngredients(self, subcanvas, itemIngredients, i):
         self.ingredientsList[i] = tk.Label(subcanvas, text=itemIngredients, borderwidth=2, relief="solid", height=2,
                                            font=('helvetica', 15))
@@ -245,14 +268,14 @@ class CommonDisplay:
     def CheckIngredientsRecognition(self, username):
         if self.noImg():
             return
-        # get the text from OCR
         tags_array = googleVision.requestRecognition(objectImg)
         ingredients_array = database.Get_Custom_Ingredients(tags_array)
 
         self.subcanvas = tk.Canvas(app.canvas, height=100000000)
         self.subcanvas.pack(padx=(50, 50), pady=(550, 0))
 
-        # display all the custom items relevant to the item
+        # create list of all the custom items relevant to the item
+        # create buttons that can display these lists with printIngredients()
         max = 0
         for i in range(0, len(tags_array)):  # Rows
             if ingredients_array[i] != '0':
@@ -287,6 +310,8 @@ class CommonDisplay:
         matchingArr = googleVision.getMatchingArr(responseRec, harmfulList)
         self.printIntersection("generally harmful ingredients", matchingArr)
 
+    # NOTE: unused. originally planned for user to manually refresh image
+    # final implementation it automatically refreshes. Therefore acceptNextImage never becomes false
     # accept incoming cropped image
     def MakeAcceptNextImage(self):
         global acceptNextImage

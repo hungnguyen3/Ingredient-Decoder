@@ -5,6 +5,7 @@ import PIL
 from PIL import Image
 import os
 
+# testing communication between processes
 
 img1 = "/images/download.jpg"
 img2 = "/images/download.jpg"

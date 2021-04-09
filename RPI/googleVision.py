@@ -46,7 +46,7 @@ def requestOCR(img_path):
         return "notOCR"
 
 # google cloud vision OBJECT_LOCALIZATION Recognition API call
-def requestRecognition(img_path):
+def requestRecognition(img_path):0
     retArray = []
     img_data = prepareRequest(img_path, 'OBJECT_LOCALIZATION', 10)
     result = requests.post(url,

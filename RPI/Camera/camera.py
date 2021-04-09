@@ -136,6 +136,16 @@ def sendImageToDe1():
     print(img)
     print(count)
 
+
+"""
+Protocol:
+    Camera process polls sonar, and takes picture. writes picture to directory. puts notification in queue
+
+    This process checks queue, if set reads image and puts acknowledgement in queue
+
+    once acknowledgement read, Camera process may take a new picture.
+
+"""
 # this is the main protocol of the interaction between the Raspberry Pi and the DE1-SoC
 # this is a process running along side with the touchscreen app
 def run(outputQueue, ackQueue):
