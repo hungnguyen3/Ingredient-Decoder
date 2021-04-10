@@ -2,18 +2,6 @@ var express = require("express");
 var bodyparser = require("body-parser");
 var app = express();
 
-var accountSid = 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // Your Account SID from www.twilio.com/console
-var authToken = 'your_auth_token';   // Your Auth Token from www.twilio.com/console
-
-var twilio = require('twilio');
-var client = new twilio(accountSid, authToken);
-
-client.messages.create({
-    body: 'Hello from Node',
-    to: '+12345678901',  // Text this number
-    from: '+12345678901' // From a valid Twilio number
-})
-.then((message) => console.log(message.sid));
 
 
 app.use(bodyparser.json({limit: '50mb'}));
@@ -23,26 +11,26 @@ const port1 = process.env.PORT || 3000;
 var MongoClient = require("mongodb").MongoClient;
 const ID = require("mongodb").ObjectId
 
-MongoClient.connect("mongodb://localhost:27017",
+MongoClient.connect("mongodb://localhost:27017",  // init Mongodb
     { useUnifiedTopology: true },
     (err, client) =>{
         const db = client.db("list");
         const db_logic = client.db("logic");
-        app.get("/ws", function(req, res){
+        app.get("/ws", function(req, res){ // test
             console.log("hi");
             res.send("hi");
         })
 
         app.get("/sms", function(req, res){
-            var accountSid = 'AC98773eb9edfb5b0b5597b2388dea0fdb'; // Your Account SID from www.twilio.com/console
-            var authToken = 'd9ffefbec8dc9eb184cce40794941de4';   // Your Auth Token from www.twilio.com/console
+            var accountSid = ''; // Your Account SID from www.twilio.com/console
+            var authToken = '';   // Your Auth Token from www.twilio.com/console
 
             var twilio = require('twilio');
             var client = new twilio(accountSid, authToken);
 
             client.messages.create({
                 body: '391 Project',
-                to: '+12367773808',  // Text this number
+                to: '+17783188408',  // Text this number
                 from: '+18582992537' // From a valid Twilio number
             })
             .then((message) => {
@@ -51,8 +39,11 @@ MongoClient.connect("mongodb://localhost:27017",
             });
         })
 
-
-        app.post('/compareplist', function(req,res){
+        app.post('/compareplist', function(req,res){   //compare the text detection result with personalized list 
+            if(typeof req.body.text_d === 'undefined'){
+                res.status(200).json({ message: ""});
+            }
+            else{
             db.collection("account").find({"username": req.body.username}).toArray(function(err,data){
                 if(data.length == 1){
                     var re = "";
@@ -65,11 +56,11 @@ MongoClient.connect("mongodb://localhost:27017",
                     res.status(200).json({ message: re});
                 }
                 else{
-                    res.status(200).json({ message: "err plist"});
+                    res.status(200).json({ message: ""});
                 }
-            });
+            });}
         });
-        app.post("/signup", function(req,res){
+        app.post("/signup", function(req,res){  //signup with a unique username and password
             db.collection("account").find({"username": req.body.username}).toArray(function(err, data){
                 if(data.length == 0){
                     db.collection("account").insertOne({
@@ -87,7 +78,7 @@ MongoClient.connect("mongodb://localhost:27017",
             });
             
         });
-        app.post("/login", function(req,res){
+        app.post("/login", function(req,res){   //login with username and password
             db.collection("account").find({"username": req.body.username, "password": req.body.password}).toArray(function(err, data){
                 if(data.length == 1){
                     if(data[0].type == "c")
@@ -100,7 +91,7 @@ MongoClient.connect("mongodb://localhost:27017",
                 }
             });
         });
-        app.post("/plist",function(req,res){
+        app.post("/plist",function(req,res){     //get the personalized list  
             db.collection("account").find({"username": req.body.username}).toArray(function(err,data){
                 console.log(data);
                 console.log(req.body);
@@ -112,15 +103,15 @@ MongoClient.connect("mongodb://localhost:27017",
                 }
             });
         })
-        app.post("/plist_add",function(req,res){
+        app.post("/plist_add",function(req,res){    //add items in personalized list 
             db.collection("account").updateOne({"username": req.body.username}, {$push:{"itemlist":{"p": req.body.plist_add}}});
             res.status(200).json({ message: "plist_add"});
         })
-        app.post("/plist_clear",function(req,res){
+        app.post("/plist_clear",function(req,res){      //clear all items in personalized list 
             db.collection("account").updateOne({"username": req.body.username}, {$set:{"itemlist":[]}});
             res.status(200).json({ message: "plist_clear"});
         })
-        app.post("/ilist",function(req,res){
+        app.post("/ilist",function(req,res){        //get items list
             db.collection("account").find({"username": req.body.username}).toArray(function(err,data){
                 console.log(data);
                 if(data.length == 1){
@@ -131,12 +122,12 @@ MongoClient.connect("mongodb://localhost:27017",
                 }
             });
         })
-        app.post("/ilist_clear",function(req,res){
+        app.post("/ilist_clear",function(req,res){      //clear all items in specific store
             db.collection("account").updateOne({"username": req.body.username}, {$set:{"itemlist":[]}});
             db.collection("store").deleteMany({"owner": req.body.username});
             res.status(200).json({ message: "ilist_clear"});
         })
-        app.post("/ilist_add",function(req,res){
+        app.post("/ilist_add",function(req,res){    //add a new items in specific store
             
             var addone = {
                 item_name: req.body.item_name,
@@ -152,12 +143,12 @@ MongoClient.connect("mongodb://localhost:27017",
 
             res.status(200).json({ message: "ilist_add"});
         })
-        app.post("/search_byname",function(req,res){
+        app.post("/search_byname",function(req,res){ //search items in store by its name or owner’s name
             db.collection("store").find({$or:[{"owner": req.body.to_search},{"item_name":req.body.to_search}]}).toArray(function(err,data){
                 res.status(200).json({ message: data});
             })
         })
-        app.post("/image_get",function(req,res){
+        app.post("/image_get",function(req,res){  // get image by the _id of item
             var ObjectId = require('mongodb').ObjectId; 
             var id = req.body.search_id;  
             var o_id = new ObjectId(id);
