@@ -21,7 +21,7 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity { // login page
     private EditText username_t;
     private EditText password_t;
     private Button login_b;
@@ -36,10 +36,13 @@ public class LoginActivity extends AppCompatActivity {
         login_b = findViewById(R.id.login);
         loginmes = findViewById(R.id.loginmes);
         signup_b = findViewById(R.id.signup);
+        // variables
+
+        // login buttom click
         login_b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!(username_t.getText().toString().equals("") || password_t.getText().toString().equals(""))){
+                if(!(username_t.getText().toString().equals("") || password_t.getText().toString().equals(""))){  // check if the username or password empty
                     RequestQueue requestQueue = Volley.newRequestQueue(LoginActivity.this);
                     JSONObject postData = new JSONObject();
                     try {
@@ -48,22 +51,23 @@ public class LoginActivity extends AppCompatActivity {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+                    // perpare the API req
                     JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, "http:52.138.39.36:3000/login", postData, new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
                             System.out.println(response);
                             try {
-                                if(response.getString("message").equals("clogin")){
+                                if(response.getString("message").equals("clogin")){   //then go to customer account
                                     Intent intent = new Intent(LoginActivity.this, MenuCActivity.class);
                                     intent.putExtra("input_username", username_t.getText().toString());
                                     startActivity(intent);
-                                }else if(response.getString("message").equals("slogin")){
+                                }else if(response.getString("message").equals("slogin")){ // then go to store owner account
                                     Intent intent = new Intent(LoginActivity.this, MenuSActivity.class);
                                     intent.putExtra("input_username", username_t.getText().toString());
                                     startActivity(intent);
                                 }
                                 else{
-                                    loginmes.setText("wrong username or password!");
+                                    loginmes.setText("wrong username or password!");  // not found
                                     password_t.setText("");
                                 }
                             } catch (JSONException e) {
@@ -81,22 +85,23 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     });
                     requestQueue.add(jsonObjectRequest);
+                    // send the API req to login
                 }
                 else{
-                    loginmes.setText("empty username or password!");
+                    loginmes.setText("empty username or password!");  // else at least one of password and username is empty
                     password_t.setText("");
                 }
             }
         });
-        signup_b.setOnClickListener(new View.OnClickListener() {
+        signup_b.setOnClickListener(new View.OnClickListener() {  // sign up button
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
-                startActivity(intent);
+                startActivity(intent); // go to SignupActivity
             }
         });
     }
-    private JsonObjectRequest sendapi(JSONObject a, String url) {
+    private JsonObjectRequest sendapi(JSONObject a, String url) {   // sample api request
 
         JSONObject postData = new JSONObject();
         postData = a;

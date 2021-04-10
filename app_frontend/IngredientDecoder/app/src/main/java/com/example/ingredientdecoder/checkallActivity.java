@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class checkallActivity extends AppCompatActivity {
+public class checkallActivity extends AppCompatActivity { // page of items list
     private ArrayList<String> al;
     private ArrayAdapter<String> aa;
     @Override
@@ -38,7 +38,7 @@ public class checkallActivity extends AppCompatActivity {
         al = new ArrayList<>(Arrays.asList(base));
         aa = new ArrayAdapter<>(this,R.layout.plist, R.id.item, al);
         listvi.setAdapter(aa);
-
+        // set up the listView
         RequestQueue requestQueue = Volley.newRequestQueue(checkallActivity.this);
         JSONObject postData = new JSONObject();
         try {
@@ -46,6 +46,7 @@ public class checkallActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        // perpare the API request
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, "http:52.138.39.36:3000/ilist", postData, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
@@ -58,6 +59,7 @@ public class checkallActivity extends AppCompatActivity {
                     }
                     al.addAll(list);
                     aa.notifyDataSetChanged();
+                    // fill listView with API response
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -70,13 +72,13 @@ public class checkallActivity extends AppCompatActivity {
             }
         });
         requestQueue.add(jsonObjectRequest);
-
-
+        // send the request
         clearall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 al.clear();
                 aa.notifyDataSetChanged();
+                // clear the listView
                 RequestQueue requestQueue = Volley.newRequestQueue(checkallActivity.this);
                 JSONObject postData = new JSONObject();
                 try {
@@ -84,6 +86,7 @@ public class checkallActivity extends AppCompatActivity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                // perpare the API request
                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, "http:52.138.39.36:3000/ilist_clear", postData, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
@@ -97,6 +100,7 @@ public class checkallActivity extends AppCompatActivity {
                     }
                 });
                 requestQueue.add(jsonObjectRequest);
+                // send the API request to clear the items in db
 
             }
         });

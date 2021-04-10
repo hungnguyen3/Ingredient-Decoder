@@ -21,7 +21,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class SignupActivity extends AppCompatActivity {
+public class SignupActivity extends AppCompatActivity { // sign up page
     private TextView signuoinfro;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,12 +32,12 @@ public class SignupActivity extends AppCompatActivity {
         EditText signupp = findViewById(R.id.signupp);
         RadioButton radioButton = findViewById(R.id.radioButton);
         signuoinfro= findViewById(R.id.signupinfro);
-
-        signupsib.setOnClickListener(new View.OnClickListener() {
+        // variables
+        signupsib.setOnClickListener(new View.OnClickListener() { // submit button
             @Override
             public void onClick(View v) {
 
-                if(!(signupu.getText().toString().equals("") || signupp.getText().toString().equals(""))){
+                if(!(signupu.getText().toString().equals("") || signupp.getText().toString().equals(""))){ // check the Textviews empty
                     RequestQueue requestQueue = Volley.newRequestQueue(SignupActivity.this);
                     JSONObject postData = new JSONObject();
                     try {
@@ -50,9 +50,10 @@ public class SignupActivity extends AppCompatActivity {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                    requestQueue.add(sendapi(postData, "http:52.138.39.36:3000/signup"));
+                    // prepare API req
+                    requestQueue.add(sendapi(postData, "http:52.138.39.36:3000/signup")); // send req to sign up
                 }else {
-                    signuoinfro.setText("Please provide all information");
+                    signuoinfro.setText("Please provide all information"); // empty username or password
                 }
             }
         });
@@ -62,7 +63,7 @@ public class SignupActivity extends AppCompatActivity {
     }
 
 
-    private JsonObjectRequest sendapi(JSONObject a, String url) {
+    private JsonObjectRequest sendapi(JSONObject a, String url) { // sample send API req
 
         JSONObject postData = new JSONObject();
         postData = a;
