@@ -2,11 +2,12 @@ import serial
 import time
 
 ser = serial.Serial('/dev/ttyAMA0', 115200)
+
+# Transmitting signals to DE1-SoC using RS232 serial connection
 if ser.isOpen == False:
     ser.open()
 try:
     while True:
-        #count = count + count
         ser.write(b"1")
         time.sleep(1)
         ser.write(b"2")

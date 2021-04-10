@@ -5,6 +5,7 @@ import PIL
 from PIL import Image
 import os
 
+# testing communication between processes
 
 img1 = "/images/download.jpg"
 img2 = "/images/download.jpg"
@@ -13,7 +14,6 @@ workingDir = os.path.dirname(os.path.abspath(__file__))
 
 
 def produceImage(outputQ, ackQ):
-
     global img
     takeNew = False
     while True:

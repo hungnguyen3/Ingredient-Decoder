@@ -4,12 +4,13 @@ import os
 import RPi.GPIO as GPIO
 import time
 import serial
-#from crop import cropImage
 
+# RS232 serial connection
 ser = serial.Serial('/dev/ttyAMA0', 115200)
 if ser.isOpen == False:
     ser.open()
 
+# bluetooth serial connection
 blueSer = serial.Serial('/dev/rfcomm0', 115200)
 if blueSer.isOpen == False:
     blueSer.open()
@@ -28,15 +29,12 @@ GPIO_ECHO = 24
 GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
 GPIO.setup(GPIO_ECHO, GPIO.IN)
 
-#cap = cv2.VideoCapture(0)
-
-#ret, frame = cap.read()
-#rows, cols, channels = frame.shape
-
+# global variables used between multiple processes
 outputQ = None
 ackQ = None
 takeNew = False
 
+# this function crops an image based on coordinates specified
 def cropImage(imageName, xMin, xMax, yMin, yMax):
     img = cv2.imread(imgPath + imageName)
     print(img)
@@ -46,6 +44,7 @@ def cropImage(imageName, xMin, xMax, yMin, yMax):
     cv2.imwrite(filename, crop)
     print("image cropped")
 
+# capture an image of a set resolution
 def takeImage(cap, factor, imageName):
     cap.set(3,160*factor)
     cap.set(4,90*factor)
@@ -57,6 +56,7 @@ def takeImage(cap, factor, imageName):
     cv2.imwrite(filename, dst)
     print("image generated")
 
+# this function displays the current distance of the item
 def distance():
     # send a trigger
     GPIO.output(GPIO_TRIGGER, True)
@@ -82,6 +82,8 @@ def distance():
 
     return distance
 
+# when an item is placed in front of the camera
+# take an image and send the image to DE1
 def waitForItem(cap):
     global takeNew
     while True:
@@ -110,6 +112,7 @@ def waitForItem(cap):
             else:
                 print(dist)
 
+# read the customer ID received from the DE1-SoC
 def bluetoothLogin():
     username = []
     while(1):
@@ -119,6 +122,7 @@ def bluetoothLogin():
             username.append(response)
             print(response)
 
+# send an image to DE1-SoC through RS232 serial connection
 def sendImageToDe1():
     img = cv2.imread(imgPath + "/small.jpg")
     rows,cols,rgb = img.shape
@@ -126,14 +130,24 @@ def sendImageToDe1():
     for i in range(rows-1, -1, -1):
         for j in range(cols):
             for k in range(rgb):
-                #time.sleep(0.00001)
                 value = int(img[i,j,k]/2)
                 ser.write(bytes(str(chr(value)), 'ascii'))
                 count = count + 1
-                #print(value)
     print(img)
     print(count)
 
+
+"""
+Protocol:
+    Camera process polls sonar, and takes picture. writes picture to directory. puts notification in queue
+
+    This process checks queue, if set reads image and puts acknowledgement in queue
+
+    once acknowledgement read, Camera process may take a new picture.
+
+"""
+# this is the main protocol of the interaction between the Raspberry Pi and the DE1-SoC
+# this is a process running along side with the touchscreen app
 def run(outputQueue, ackQueue):
     cap = cv2.VideoCapture(0)
     global outputQ
@@ -174,7 +188,6 @@ def run(outputQueue, ackQueue):
         print(xMax)
         print(yMin)
         print(yMax)
-        #cropImage('/small.jpg', xMin, xMax, yMin, yMax)
         # hacky fix
         if yMin > 10:
             yMin = yMin - 10
@@ -184,7 +197,4 @@ def run(outputQueue, ackQueue):
         outputQ.put(True)
         takeNew = False
 
-#cropImage('/small.jpg', 0, 50, 0, 50)
-#takeImage(9, '/big.jpg')
-#cap.release()
 cv2.destroyAllWindows()
