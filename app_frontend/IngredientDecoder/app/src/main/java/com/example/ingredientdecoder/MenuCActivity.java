@@ -19,8 +19,8 @@ import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
 
-public class MenuCActivity extends AppCompatActivity {
-    static final UUID mUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+public class MenuCActivity extends AppCompatActivity { // Menu page of customer account
+    static final UUID mUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");   //bluetooth button uuid
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,7 +33,8 @@ public class MenuCActivity extends AppCompatActivity {
         TextView nametext = findViewById(R.id.welcome_s);
         nametext.setText("Welcome "+username);
         System.out.println(username.getBytes());
-        plist.setOnClickListener(new View.OnClickListener() {
+        // variables
+        plist.setOnClickListener(new View.OnClickListener() { // go to plist function
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MenuCActivity.this, pListActivity.class);
@@ -41,7 +42,7 @@ public class MenuCActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        scan.setOnClickListener(new View.OnClickListener() {
+        scan.setOnClickListener(new View.OnClickListener() { // go to scan ingredient list function
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MenuCActivity.this, MainActivity.class);
@@ -49,7 +50,7 @@ public class MenuCActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        scani.setOnClickListener(new View.OnClickListener() {
+        scani.setOnClickListener(new View.OnClickListener() { // go to scan items function
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MenuCActivity.this, bynameActivity.class);
@@ -59,13 +60,13 @@ public class MenuCActivity extends AppCompatActivity {
         });
 
 
-        bluetooth.setOnClickListener(new View.OnClickListener() {
+        bluetooth.setOnClickListener(new View.OnClickListener() { // bluetooth code
             @Override
             public void onClick(View v) {
 
                 BluetoothAdapter btAdapter = BluetoothAdapter.getDefaultAdapter();
                 System.out.println(btAdapter.getBondedDevices());
-                BluetoothDevice btDevice = btAdapter.getRemoteDevice("20:18:11:21:21:00");
+                BluetoothDevice btDevice = btAdapter.getRemoteDevice("20:18:11:21:23:01");
                 System.out.println(btDevice.getName());
                 BluetoothSocket btSocket = null;
                 int c = 0;
@@ -81,14 +82,14 @@ public class MenuCActivity extends AppCompatActivity {
                     c++;
                 }
                 while (!btSocket.isConnected() && c < 3);
-
+                // init bt
                 try {
                     OutputStream outputStream = btSocket.getOutputStream();
                     outputStream.write(username.getBytes());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
+                // write bt
 
                 try {
                     btSocket.close();
@@ -97,6 +98,7 @@ public class MenuCActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 nametext.setText(username + " Bluetooth sign in finished");
+                // close bt
             }
         });
 
