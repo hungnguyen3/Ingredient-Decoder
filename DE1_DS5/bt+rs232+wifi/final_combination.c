@@ -25,19 +25,19 @@
 #define RS232_DivisorLatchMSB                   (*(volatile unsigned char *)(0xFF210202))
 //...............................................................................................
 // the memory address of wifi
-#define WiFi_Offset                        (volatile unsigned char *)(0x00000010)
-#define WiFi_ReceiverFifo                  (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_ReceiverFifo))
-#define WiFi_TransmitterFifo               (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_TransmitterFifo))
-#define WiFi_InterruptEnableReg            (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_InterruptEnableReg))
-#define WiFi_InterruptIdentificationReg    (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_InterruptIdentificationReg))
-#define WiFi_FifoControlReg                (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_FifoControlReg))
-#define WiFi_LineControlReg                (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_LineControlReg))
-#define WiFi_ModemControlReg               (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_ModemControlReg))
-#define WiFi_LineStatusReg                 (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_LineStatusReg))
-#define WiFi_ModemStatusReg                (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_ModemStatusReg))
-#define WiFi_ScratchReg                    (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_ScratchReg))
-#define WiFi_DivisorLatchLSB               (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_DivisorLatchLSB))
-#define WiFi_DivisorLatchMSB               (*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_DivisorLatchMSB))
+#define WiFi_Offset                        		(volatile unsigned char *)(0x00000010)
+#define WiFi_ReceiverFifo                  		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_ReceiverFifo))
+#define WiFi_TransmitterFifo               		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_TransmitterFifo))
+#define WiFi_InterruptEnableReg            		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_InterruptEnableReg))
+#define WiFi_InterruptIdentificationReg    		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_InterruptIdentificationReg))
+#define WiFi_FifoControlReg                		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_FifoControlReg))
+#define WiFi_LineControlReg                		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_LineControlReg))
+#define WiFi_ModemControlReg               		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_ModemControlReg))
+#define WiFi_LineStatusReg                 		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_LineStatusReg))
+#define WiFi_ModemStatusReg                		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_ModemStatusReg))
+#define WiFi_ScratchReg                    		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_ScratchReg))
+#define WiFi_DivisorLatchLSB               		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_DivisorLatchLSB))
+#define WiFi_DivisorLatchMSB               		(*(volatile unsigned char *)((int)WiFi_Offset + (int)&RS232_DivisorLatchMSB))
 //................................................................................................
 //the memory address of bluetooth
 #define Bluetooth_ReceiverFifo        			((volatile unsigned char *)(0xFF210220))
@@ -53,13 +53,13 @@
 #define Bluetooth_DivisorLatchLSB 				((volatile unsigned char *)(0xFF210220))
 #define Bluetooth_DivisorLatchMSB 				((volatile unsigned char *)(0xFF210222))
 
-void Init_BT(void);
-int putcharBT (int , volatile unsigned char *,  volatile unsigned char *);
-int getcharBT( volatile unsigned char *,  volatile unsigned char *);
+void Init_bluetooth(void);
+int putcharbluetooth (int , volatile unsigned char *,  volatile unsigned char *);
+int getcharbluetooth( volatile unsigned char *,  volatile unsigned char *);
 int TestForReceivedData(volatile unsigned char *);
 void Flush( volatile unsigned char *, volatile unsigned char * );
-void BTFactoryReset(void);
-void BTOutMessage(char ** Message);
+void bluetooth_send(void);
+void print_bluetooth_m(char ** Message);
 
 
 
@@ -139,7 +139,7 @@ void delay(long cycles)
         now = clock();
 }
 
-void BTFactoryReset(void)
+void bluetooth_send(void)
 {
 	// wait for 1 second between command
 	// enter these commands in upper case
@@ -147,7 +147,7 @@ void BTFactoryReset(void)
 	// SF,1 factory reset
 	// SN,Device1 set device name to “Device1”
 	// SP,1234 set 4 digit pin to “1234”
-	// R,1<CR> reboot BT controller
+	// R,1<CR> reboot bluetooth controller
 	char c, Message[100] ;
 	while(1){
 		printf("\r\nEnter Message for Bluetooth Controller:") ;
@@ -157,19 +157,19 @@ void BTFactoryReset(void)
 
 		int iterator= 0;
 		while (Message[iterator] != '\0') {
-			putcharBT(Message[iterator], Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
+			putcharbluetooth(Message[iterator], Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
 			iterator++;
 		}
 
 		if(strcmp(Message, "$$$") != 0) {
-  		  	  putcharBT('\r', Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-  		  	  putcharBT('\n',  Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo );
+  		  	  putcharbluetooth('\r', Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
+  		  	  putcharbluetooth('\n',  Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo );
 		}
 		// now read back acknowledge string from device and display on console,
 		// will timeout after no communication for about 2 seconds
 		for(int i = 0; i < 4000000; i ++) {
 			if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
-				c = getcharBT(Bluetooth_LineStatusReg ,   Bluetooth_ReceiverFifo);
+				c = getcharbluetooth(Bluetooth_LineStatusReg ,   Bluetooth_ReceiverFifo);
 				printf("%c", c);
 				i=0 ;
 			}
@@ -178,7 +178,7 @@ void BTFactoryReset(void)
 }
 
 //give an array of message, print each char of this array one by one
-void BTOutMessage(char ** Message) {
+void print_bluetooth_m(char ** Message) {
 	int iterator=0;
 	while(iterator<100 || Message[iterator]!= NULL){
 		//continue print if the length is not exceed 100 or the message is end
@@ -187,7 +187,7 @@ void BTOutMessage(char ** Message) {
 	}
 }
 
-void Init_BT(void) {
+void Init_bluetooth(void) {
 	// set bit 7 of Line Control Register to 1, to gain access to the baud rate registers
 	unsigned char line_control_register= *Bluetooth_LineControlReg;
 	line_control_register = line_control_register |  0x80;
@@ -207,7 +207,7 @@ void Init_BT(void) {
 	*Bluetooth_FifoControlReg = *Bluetooth_FifoControlReg ^  0x06;
 }
 
-int putcharBT(int c, volatile unsigned char * LineStatusReg ,  volatile unsigned char * TransmitterFifo) {
+int putcharbluetooth(int c, volatile unsigned char * LineStatusReg ,  volatile unsigned char * TransmitterFifo) {
 	// wait for Transmitter Holding Register bit (5) of line status register to be '1'
 	// indicating we can write to the device
 	while ((*LineStatusReg & 0x20)!= 0x20);
@@ -217,7 +217,7 @@ int putcharBT(int c, volatile unsigned char * LineStatusReg ,  volatile unsigned
 	// return the character we printed
 }
 
-int getcharBT( volatile unsigned char * LineStatusReg ,  volatile unsigned char *  ReceiverFifo ) {
+int getcharbluetooth( volatile unsigned char * LineStatusReg ,  volatile unsigned char *  ReceiverFifo ) {
 	while ((*LineStatusReg & 0x01)!= 0x01);
 	// wait for Data Ready bit (0) of line status register to be '1'
 	// read new character from ReceiverFiFo register
@@ -240,15 +240,49 @@ int TestForReceivedData(volatile unsigned char *  LineStatusReg) {
 
 //wifi module
 
-void WFOutMessage (char * Message){
-    int i;
-    //enter an array of message we need to send, send it one char by one char
-    for(i = 0; Message[i] != '\0'; i++){
-    	putcharWF(Message[i]);
-    }
+void Init_WiFi (void){
+	WiFi_LineControlReg = 0x80;
+
+	//set the baud rate here
+    int divisor = (int) ((50E6)/(115200 *16));
+    WiFi_DivisorLatchLSB = divisor & 0xff;
+    WiFi_DivisorLatchMSB = (divisor >> 8) & 0xff;
+
+    //set the data bits and stop bits here
+    WiFi_LineControlReg = 0x33;
+    WiFi_FifoControlReg = 0x6;
+    WiFi_FifoControlReg = 0;
 }
+
+int putcharWiFi (int  c){
+	while((WiFi_LineStatusReg & 0x20) != 0x20){
+		// prevent the while loop break. also prove the code is still writing to the wifi chip
+		printf("waiting\r\n");
+	};
+    //while( ((WiFi_LineStatusReg >> 5) & 1) == 0){}
+	//write the data into the WiFi_TransmitterFifo to transmit data
+    WiFi_TransmitterFifo = c;
+    return c;
+}
+
+int getcharWiFi (void){
+    // wait for WiFi_LineStatusReg to be '1'.
+	//WiFi_ReceiverFifo is valid if WiFi_LineStatusReg is "1".
+    while ( (WiFi_LineStatusReg & 1) == 0){}
+
+    // return the value of WiFi_LineStatusReg
+    return WiFi_ReceiverFifo;
+}
+
+//test whether the wifi receive the data
+int WiFi_TestForReceivedData (void){
+    // receive the data if WiFi LineStatusReg bit 0 is 1.
+	//then return 1
+    return (WiFi_LineStatusReg & 1);
+}
+
 //Waits for the transmission of outgoing serial data to complete.
-void WF_Flush (void){
+void WiFi_Flush (void){
     volatile int temp = 0;
 
     while(WiFi_LineStatusReg & 1) {
@@ -260,32 +294,50 @@ void WF_Flush (void){
     //return if the wifi chip finish sending the data
 }
 
+
+void print_wifi_m (char * Message){
+    int i;
+    //enter an array of message we need to send, send it one char by one char
+    for(i = 0; Message[i] != '\0'; i++){
+    	putcharWiFi(Message[i]);
+    }
+}
+
+//test whether it is receiving the data or not
+int testWiFi (void){
+    if((WiFi_LineStatusReg & 1)){
+        return 1;
+    }
+    return 0;
+}
+
+
 //#include <io.h>
 
-void send_code(char * Message, char * temp){
+void wifi_send(char * Message, char * temp){
 	printf("\r\nEnter Message for WiFi Controller: ") ;
 //	gets(Message); // get command string from user keyboard
 //	gets(temp);
 	printf("\r\nhere wifi send");
-	WFOutMessage(Message) ; // write string to BT device
+	print_wifi_m(Message) ; // write string to bluetooth device
 
 	// if the command string was NOT "$$$" send \r\n to simulate click "enter" button to send the script
 	if(strcmp(Message, "$$$") != 0) {
-		putcharWF('\r') ;
-		putcharWF('\n') ;
+		putcharWiFi('\r') ;
+		putcharWiFi('\n') ;
 	}
 
 	// now read back acknowledge string from device and display on console,
 	// will timeout after no communication for about 2 seconds
 	char c;
 	for(int i = 0; i < 2000000; i ++) {
-		if(testWF() == 1) {
-			c = getcharWF();
+		if(testWiFi() == 1) {
+			c = getcharWiFi();
 			putchar(c);
 		}
 	}
 }
-void WFFactoryReset (void)
+void send_lua (void)
 {
 
 	//put lua lines into Message array
@@ -306,81 +358,31 @@ void WFFactoryReset (void)
     char temp[20]= "\r\n";
     //the "enter" signal
 
-    send_code(temp, temp);
-    send_code(temp, temp);
+    wifi_send(temp, temp);
+    wifi_send(temp, temp);
     //simulate click the "enter" button twice to make sure the wifi chip is ready for enter the lua script
-    send_code(Message1, temp);
-    send_code(Message2, temp);
-    send_code(Message3, temp);
-    send_code(Message4, temp);
-    send_code(Message5, temp);
-    send_code(Message6, temp);
-    send_code(Message7, temp);
-    send_code(Message8, temp);
-    send_code(Message9, temp);
+    wifi_send(Message1, temp);
+    wifi_send(Message2, temp);
+    wifi_send(Message3, temp);
+    wifi_send(Message4, temp);
+    wifi_send(Message5, temp);
+    wifi_send(Message6, temp);
+    wifi_send(Message7, temp);
+    wifi_send(Message8, temp);
+    wifi_send(Message9, temp);
     //enter the lua script, click the "enter" button after each line of the script
-    send_code(temp, temp);
+    wifi_send(temp, temp);
     //click the "enter" button at finally
 
 }
-
-//test whether it is receiving the data or not
-int testWF (void){
-    if((WiFi_LineStatusReg & 1)){
-        return 1;
-    }
-    return 0;
-}
-
-void Init_WF (void){
-	WiFi_LineControlReg = 0x80;
-
-	//set the baud rate here
-    int divisor = (int) ((50E6)/(115200 *16));
-    WiFi_DivisorLatchLSB = divisor & 0xff;
-    WiFi_DivisorLatchMSB = (divisor >> 8) & 0xff;
-
-    //set the data bits and stop bits here
-    WiFi_LineControlReg = 0x33;
-    WiFi_FifoControlReg = 0x6;
-    WiFi_FifoControlReg = 0;
-}
-
-int putcharWF (int  c){
-	while((WiFi_LineStatusReg & 0x20) != 0x20){
-		// prevent the while loop break. also prove the code is still writing to the wifi chip
-		printf("waiting\r\n");
-	};
-    //while( ((WiFi_LineStatusReg >> 5) & 1) == 0){}
-	//write the data into the WiFi_TransmitterFifo to transmit data
-    WiFi_TransmitterFifo = c;
-    return c;
-}
-
-int getcharWF (void){
-    // wait for WiFi_LineStatusReg to be '1'.
-	//WiFi_ReceiverFifo is valid if WiFi_LineStatusReg is "1".
-    while ( (WiFi_LineStatusReg & 1) == 0){}
-
-    // return the value of WiFi_LineStatusReg
-    return WiFi_ReceiverFifo;
-}
-
-//test whether the wifi receive the data
-int WF_TestForReceivedData (void){
-    // receive the data if WiFi LineStatusReg bit 0 is 1.
-	//then return 1
-    return (WiFi_LineStatusReg & 1);
-}
-
 
 
 int main(void) {
 
 
-	Init_BT();
+	Init_bluetooth();
 	Init_RS232();
-//	BTFactoryReset();
+//	bluetooth_send();
 	while(1){
 			int usernameCounter = 0;
 			int username[100];
@@ -389,7 +391,7 @@ int main(void) {
 
 			while(1){
 				if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
-					int c = getcharBT(Bluetooth_LineStatusReg , Bluetooth_ReceiverFifo);
+					int c = getcharbluetooth(Bluetooth_LineStatusReg , Bluetooth_ReceiverFifo);
 					if(c != 13 && c != 10){
 						printf("received %d from the Bluetooth \n", c);
 						username[usernameCounter] = c;
@@ -412,8 +414,8 @@ int main(void) {
 			}
 
 			//send the request through the wifi chip
-			Init_WF();
-		    WFFactoryReset();
+			Init_WiFi();
+		    send_lua();
 
 	}
 
