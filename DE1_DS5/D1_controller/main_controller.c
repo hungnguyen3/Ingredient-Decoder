@@ -2,6 +2,9 @@
 #include <time.h>
 #include <math.h>
 
+// address of hardware acceleration
+#define simpleBox (volatile int *) 0xFF202060	//whiteTwo 100
+
 #define SWITCHES    (volatile unsigned int *)(0xFF200000)
 #define PUSHBUTTONS (volatile unsigned int *)(0xFF200010)
 
@@ -23,19 +26,6 @@
 
 #define RS232_DivisorLatchLSB                   (*(volatile unsigned char *)(0xFF210200))
 #define RS232_DivisorLatchMSB                   (*(volatile unsigned char *)(0xFF210202))
-//...............................................................................................
-#define GPS_ReceiverFifo        				((volatile unsigned char *)(0xFF210210))
-#define GPS_TransmitterFifo     				((volatile unsigned char *)(0xFF210210))
-#define GPS_InterruptEnableReg  				((volatile unsigned char *)(0xFF210212))
-#define GPS_InterruptIdentificationReg 			((volatile unsigned char *)(0xFF210214))
-#define GPS_FifoControlReg 						((volatile unsigned char *)(0xFF210214))
-#define GPS_LineControlReg 						((volatile unsigned char *)(0xFF210216))
-#define GPS_ModemControlReg 					((volatile unsigned char *)(0xFF210218))
-#define GPS_LineStatusReg 						((volatile unsigned char *)(0xFF21021A))
-#define GPS_ModemStatusReg 						((volatile unsigned char *)(0xFF21021C))
-#define GPS_ScratchReg 							((volatile unsigned char *)(0xFF21021E))
-#define GPS_DivisorLatchLSB 					((volatile unsigned char *)(0xFF210210))
-#define GPS_DivisorLatchMSB 					((volatile unsigned char *)(0xFF210212))
 //................................................................................................
 #define Bluetooth_ReceiverFifo        			((volatile unsigned char *)(0xFF210220))
 #define Bluetooth_TransmitterFifo     			((volatile unsigned char *)(0xFF210220))
@@ -55,18 +45,14 @@ int putcharBT (int , volatile unsigned char *,  volatile unsigned char *);
 int getcharBT( volatile unsigned char *,  volatile unsigned char *);
 int TestForReceivedData(volatile unsigned char *);
 void Flush( volatile unsigned char *, volatile unsigned char * );
-void BTFactoryReset(void);
-void BTOutMessage(char ** Message);
 
 void Init_RS232(void) {
 	// set bit 7 of Line Control Register to 1, to gain access to the baud rate registers
 	RS232_LineControlReg = RS232_LineControlReg | 0x80;
 	// set Divisor latch (LSB and MSB) with correct value for required baud rate
-
 	int divisor = (int) ((50E6)/(112500 *16));
 	RS232_DivisorLatchLSB = divisor & 0xff;
 	RS232_DivisorLatchMSB = (divisor >> 8) & 0xff;
-
 
 	// set bit 7 of Line control register back to 0 and
 	RS232_LineControlReg = RS232_LineControlReg & 0x7F;
@@ -108,13 +94,10 @@ int RS232TestForReceivedData(void) {
 	return 0;
 }
 
-//
 // Remove/flush the UART receiver buffer by removing any unread characters
-//
 void RS232Flush(void) { // read til nothing
 	// while bit 0 of Line Status Register == ‘1’
-	//    read unwanted char out of fifo receiver buffer
-    // return; // no more characters so return
+	// read unwanted char out of fifo receiver buffer
 	while((RS232_LineStatusReg & 0x01) == 0x01) {
 		int temp = RS232_ReceiverFifo;
 	}
@@ -134,52 +117,11 @@ void delay(long cycles)
         now = clock();
 }
 
-void BTFactoryReset(void)
-{
-	char c, Message[100] ;
-	while(1){
-		printf("\r\nEnter Message for Bluetooth Controller:") ;
-		gets(Message); // get command string from user keyboard
-
-		printf("The Message is:%s\n", Message);
-
-		int iterator= 0;
-		while (Message[iterator] != '\0') {
-			putcharBT(Message[iterator], Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-			iterator++;
-		}
-
-		if(strcmp(Message, "$$$") != 0) {
-  		  	  putcharBT('\r', Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-  		  	  putcharBT('\n',  Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo );
-		}
-		// now read back acknowledge string from device and display on console,
-		// will timeout after no communication for about 2 seconds
-		for(int i = 0; i < 4000000; i ++) {
-			if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
-				c = getcharBT(Bluetooth_LineStatusReg ,   Bluetooth_ReceiverFifo);
-				printf("%c", c);
-				i=0 ;
-			}
-		}
-	}
-}
-
-void BTOutMessage(char ** Message) {
-	int iterator=0;
-	while(iterator<100 || Message[iterator]!= NULL){
-		printf("%c", Message[iterator] );
-		iterator ++;
-	}
-}
-
 void Init_BT(void) {
 	// set bit 7 of Line Control Register to 1, to gain access to the baud rate registers
-	unsigned char line_control_register= *Bluetooth_LineControlReg;
-	line_control_register = line_control_register |  0x80;
-	*Bluetooth_LineControlReg= line_control_register;
+	*Bluetooth_LineControlReg= *Bluetooth_LineControlReg | 0x80;
 	// set Divisor latch (LSB and MSB) with correct value for required baud rate
-	int divisor = (int) ((50E6)/(38400 *16));
+	int divisor = (int) ((50E6)/(112500 *16));
 	*Bluetooth_DivisorLatchLSB = divisor & 0xff;
 	*Bluetooth_DivisorLatchMSB = (divisor >> 8) & 0xff;
 
@@ -208,7 +150,6 @@ int getcharBT( volatile unsigned char * LineStatusReg ,  volatile unsigned char 
 	// wait for Data Ready bit (0) of line status register to be '1'
 	// read new character from ReceiverFiFo register
 	return (int) *ReceiverFifo;
-	// return new character
 }
 
 // the following function polls the UART to determine if any character
@@ -224,38 +165,92 @@ int TestForReceivedData(volatile unsigned char *  LineStatusReg) {
 	}
 }
 
-// main for bluetooth
+int getHexDigit(int x, int n) {
+    return (x >> (n << 2)) & 0xff;
+}
+
+// main function for sonar sensor and hardware acceleration module
 int main(void) {
 	Init_BT();
 	Init_RS232();
-//	BTFactoryReset();
+
 	while(1){
-			int usernameCounter = 0;
-			int username[100];
-			// waiting for sign in from the user
+		int logout = 0;
+		int counter = 0;
+		int width = 160;
+		int height = 90;
 
-
-			while(1){
-				if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
-					int c = getcharBT(Bluetooth_LineStatusReg , Bluetooth_ReceiverFifo);
-					if(c != 13 && c != 10){
-						printf("received %d from the Bluetooth \n", c);
-						username[usernameCounter] = c;
-
-						if(c == 50 || c == 49){ //customer1 and customer2
-							break;
-						}
-						usernameCounter ++;
-					}
-
-				}
+		// display the Sonar sensor on the HEX display of the DE1
+		while(1){
+			while(RS232TestForReceivedData() != 1);
+			int distance = getcharRS232();
+			printf("sonar received:%d\n", distance);
+			unsigned char value = distance;
+			unsigned char first;
+			unsigned char second;
+			unsigned char third;
+			first = value%10;
+			value = value/10;
+			second = value%10;
+			value = value/10;
+			third = value%10;
+			*HEX0_1 = first;
+			*HEX2_3 = second;
+			*HEX4_5 = third;
+			if(distance < 15){
+				*LEDS = 1023;
+			}else{
+				*LEDS = 0;
 			}
 
-			// send username to Raspberry Pi
-			for(int i = 0; i <= usernameCounter; i++){
-				printf("send rs232 to RPI:%d\n", username[i]);
-				putcharRS232(username[i]);
+			// logout logic
+			if(logout == 5){
+				break;
+			}else if(distance == 0){
+				logout++;
 			}
+		}
 
+		printf("done sonar :)))\n");
+
+		// reset signal to reset hardware acceleration
+		*simpleBox = 0x1869F;
+		printf("value is now %x, %d\n", *simpleBox, *simpleBox);
+
+		// receive image and send it to hardware acceleration module
+		while(counter < 3*height*width){
+			if(RS232TestForReceivedData() == 1) {
+				*simpleBox = 2*getcharRS232()*0x1000000;
+				//printf("%d\n", counter);
+				counter++;
+			}
+		}
+		printf("value is now %x, %d\n", *simpleBox, *simpleBox);
+
+		printf("done image cropping :)))\n");
+
+		printf("0 is now %x, %d\n", getHexDigit(*simpleBox,0), getHexDigit(*simpleBox,0));
+		printf("2 is now %x, %d\n", getHexDigit(*simpleBox,2), getHexDigit(*simpleBox,2));
+		printf("2 is now %x, %d\n", getHexDigit(*simpleBox,4), getHexDigit(*simpleBox,4));
+		printf("2 is now %x, %d\n", getHexDigit(*simpleBox,6), getHexDigit(*simpleBox,6));
+
+		int boundingBoxCount = 0;
+		int next = 1;
+		// send data of the bounding box to rpi
+		while(1){
+			printf("here");
+			if(boundingBoxCount == 8){
+				break;
+			}
+			if(next == 1){
+				printf("%d\n", boundingBoxCount);
+				putcharBT(getHexDigit(*simpleBox,boundingBoxCount), Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
+				next = 0;
+			}
+			if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
+				boundingBoxCount = boundingBoxCount + 2;
+				next = 1;
+			}
+		}
 	}
 }

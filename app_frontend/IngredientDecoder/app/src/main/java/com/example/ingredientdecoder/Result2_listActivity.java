@@ -16,20 +16,21 @@ public class Result2_listActivity extends AppCompatActivity {
     private ArrayList<String> al;
     private ArrayAdapter<String> aa;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) { // results list page of scan items function
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result2_list);
         String[] name_list = getIntent().getStringArrayExtra("name_list");
         String[] il_list = getIntent().getStringArrayExtra("il_list");
         String[] image_list = getIntent().getStringArrayExtra("image_list");
         String[] owner_list = getIntent().getStringArrayExtra("owner_list");
-
+        // variables
         ListView listV = findViewById(R.id.search_res);
         String[] base = name_list;
         al = new ArrayList<>(Arrays.asList(base));
         aa = new ArrayAdapter<>(this,R.layout.search_res_list, R.id.textView3, al);
         listV.setAdapter(aa);
-        listV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        // set up the ListView
+        listV.setOnItemClickListener(new AdapterView.OnItemClickListener() { // list view click listener
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(Result2_listActivity.this, Result2Activity.class);

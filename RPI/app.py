@@ -14,8 +14,6 @@ import time
 import Camera.camera as camera
 import cv2
 
-#cap = cv2.VideoCapture(0)
-
 # import functions and classes
 import googleVision
 
@@ -23,15 +21,28 @@ import googleVision
 workingDir = os.path.dirname(os.path.abspath(__file__))
 backgroundColour = "#263D42"
 
+# variables for communicating between processes
+"""
+Protocol:
+    Camera process polls sonar, and takes picture. writes picture to directory. puts notification in queue
+    
+    This process checks queue, if set reads image and puts acknowledgement in queue
+    
+    once acknowledgement read, Camera process may take a new picture.
+
+"""
 pictureExists = False
 newPicture = False
 acceptNextImage = True
 objectImg = "/images/download.jpg"
 buffer = None
+
+# queues to pass messages between processes
 imageQueue = mp.Queue()
 ackQueue = mp.Queue()
 
-
+# class app is an instantiation of the touchscreen app. 
+# It contains several pages including Login Page, Landing Page, Regular Items Page and Custom Items page
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -43,15 +54,15 @@ class App(tk.Tk):
         # Set up Menu
         MainMenu(self)
 
-        # Set up Frames
+        # Set up Frames for different pages
         container = tk.Frame(self.canvas)
         container.place(relwidth=0.75, relheight=0.85, relx=0.1, rely=0.1)
-        # container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
 
+        # switch between different pages
         for F in (LandingPage, RegularItems, CustomItems, LoginPage):
             frame = F(container, self)
             self.frames[F] = frame
@@ -63,6 +74,8 @@ class App(tk.Tk):
         frame = self.frames[context]
         frame.tkraise()
 
+# class LoginPage is the login page of the touchscreen app
+# from this page you can log in as a guest or log in using bluetooth functionality
 class LoginPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -82,6 +95,7 @@ class LoginPage(tk.Frame):
         self.continue_button = tk.Button()
         self.controllor = controller
 
+    # log in as a guest
     def loginAsGuest(self):
         renderingUtil.refresh(self.loginStatus)
         self.loginStatus = tk.Label(self, text="You have successfully loged in as guest", height = 2, font=('helvetica', 15))
@@ -90,29 +104,29 @@ class LoginPage(tk.Frame):
         self.continue_button = tk.Button(self, text="Continue", height = 2, font=('helvetica', 15), command= lambda: self.continueToLanding())
         self.continue_button.pack()
 
+    # start browsing for a bluetooth login
     def loginBT(self):
-        #if loginSuccess == True:
         textInput = "Browsing for a bluetooth login.... "
         renderingUtil.refresh(self.loginStatus)
         self.loginStatus = tk.Label(self, text=textInput, height = 2, font=('helvetica', 15))
         self.loginStatus.pack()
         renderingUtil.refresh(self.continue_button)
 
+    # go to Landing page, reset the login status and delete the continue button
     def continueToLanding(self):
-        #go to landing page
         self.controllor.show_frame(LandingPage)
-        #reset login status
         renderingUtil.refresh(self.loginStatus)
         self.loginStatus = tk.Label(self, text="Please log in to continue", height = 2, font=('helvetica', 15))
         self.loginStatus.pack()
-        #delete continue button
         renderingUtil.refresh(self.continue_button)
 
-
+# class LandingPage is the landing page of the touchscreen app after you're signed in
+# from this page you can proceed to scan Regular Items, scan Custom Items or check out Personalized List
 class LandingPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
+        # welcome labels, buttons to navigate to different pages of the app
         label = tk.Label(self, text="You have successfully loged in")
         label.config(font=('helvetica', 30))
         label.pack(padx=10, pady=10)
@@ -132,14 +146,13 @@ class LandingPage(tk.Frame):
 
         self.user_list = tk.Label()
 
-        # why gif not running~
-        self.img = ImageTk.PhotoImage(Image.open(workingDir + "/images/cat.gif"))
+        # welcome image of a cute cat
+        readImg = renderingUtil.resizeImage("/images/cat.gif")
+        self.img = ImageTk.PhotoImage(readImg)
         welcomeImg = tk.Label(self, image=self.img)
         welcomeImg.pack()
-        # testy = tk.Button(self, text="Testy boi",
-        #                   command=lambda: controller.google_vision("/images/sushiOut.bmp", googleVision.requestRecognition))
-        # testy.pack()
 
+    # API call to the backend to retrieve the personalized list of the customer
     def show_plist(self, context, controller):
         URL = "http://52.138.39.36:3000/plist"
         userName = 'customer1'
@@ -158,21 +171,28 @@ class LandingPage(tk.Frame):
         self.user_list = tk.Label(controller.frames[context], text='Here is your list: ' + str1, font=('helvetica', 15))
         self.user_list.pack(padx=10, pady=10)
 
+"""
+class CommonDisplay is a common generic page
+both RegularItems and CustomItems classes would inherit from this class.
+it contains several buttons and labels displayed back to the users
 
+they differ in which recognition function they call: thus this function is passed in instantiation of sub-classes
+"""
 class CommonDisplay:
     def __init__(self, controller, parent, message, scanFunction, *args, **kwargs):
         self.infoButtonList = []
         self.counter = 0
         self.itemList = [None]*20 #20 items max
         self.ingredientsList = [None]*20
+
+        #subcanvas for rendering ingredients list
         self.subcanvas = tk.Canvas()
 
         readImg = renderingUtil.resizeImage("/images/Capture.jpg")
         self.img = ImageTk.PhotoImage(readImg)
         self.alert = tk.Label()
 
-        # CommonDisplay.__init__(self)
-
+        # buttons to check ingredients, go back to home page and instructions labels for the users
         label = tk.Label(self, text=message)
         label.config(font=('helvetica', 30))
         label.pack(padx=10, pady=10)
@@ -189,10 +209,7 @@ class CommonDisplay:
         self.promptLabel = tk.Label(self, image=self.img)
         self.promptLabel.pack()
 
-        #self.checkNewItem = tk.Button(self, text="Click here to check another item", height = 2, font=('helvetica', 15),
-        #                              command=lambda: self.MakeAcceptNextImage())
-        #self.checkNewItem.pack()
-
+    # navigate back to the homepage and clear the existing alerts
     def backToHomePage(self, controller):
         for i in self.itemList:
             if i != None:
@@ -204,19 +221,25 @@ class CommonDisplay:
         renderingUtil.refresh(self.alert)
         controller.show_frame(LandingPage)
 
+    # print out the intersection between the ingredients received from google API and user's personal list
+    # accounts for special cases
     def printIntersection(self, warning, matchingArr):
         renderingUtil.refresh(self.alert)
+        # tried to scan non-existent words
         if matchingArr == "notOCR":
             self.alert = tk.Label(self, text="No ingredients text detected", font=('helvetica', 15))
             self.alert.pack()
             return
+        # item does not exist as a custom item. Prompted to scan printed ingredients
         if matchingArr == "notRecognition":
             self.alert = tk.Label(self, text="Not recognized as a store custom item. Maybe try regular item instead?", font=('helvetica', 15))
             self.alert.pack()
             return
+        # no match: no harmful ingredients
         if not matchingArr:
             self.alert = tk.Label(self, text="No harmful ingredients detected", font=('helvetica', 15))
             self.alert.pack()
+        # found harmful ingredients
         else:
             warning = "We found the following " + warning + " that you might not want: \n "
             for element in matchingArr:
@@ -225,39 +248,34 @@ class CommonDisplay:
             self.alert = tk.Label(self, text=warning, font=('helvetica', 15))
             self.alert.pack()
 
-    # def customItemEntry(self, itemName, itemIngredients):
-    #     infoButton = tk.Button(self, text=itemName, font=('helvetica', 15), command=lambda: self.printIngredients(itemIngredients))
-    #     infoButton.pack()
-    #     self.infoButtonList.append(infoButton)
-
-
+    # get the text from google OCR API and match it against users' lists
     def CheckIngredientsOCR(self, username):
         if self.noImg():
             return
-        # get the text from OCR
         responseOCR = googleVision.requestOCR(objectImg)
-        # get user plist
         userList = database.Get_Personal_List(username)
-        # get the matching array
         matchingArr = googleVision.getMatchingArr(responseOCR, userList)
         self.printIntersection("ingredients matching your personal list", matchingArr)
 
+    # print out the ingredients of the corresponding custom item
+    # may have to render lists for multiple potential items (if recognized as several custom items)
     def printIngredients(self, subcanvas, itemIngredients, i):
         self.ingredientsList[i] = tk.Label(subcanvas, text=itemIngredients, borderwidth=2, relief="solid", height=2,
                                            font=('helvetica', 15))
         self.ingredientsList[i].grid(row=i, column=1)
 
+    # get the tags array from google Recognition API and match it against the store custom items
     def CheckIngredientsRecognition(self, username):
         if self.noImg():
             return
-        # get the text from OCR
         tags_array = googleVision.requestRecognition(objectImg)
         ingredients_array = database.Get_Custom_Ingredients(tags_array)
 
         self.subcanvas = tk.Canvas(app.canvas, height=100000000)
         self.subcanvas.pack(padx=(50, 50), pady=(550, 0))
 
-        # init ingredients list array
+        # create list of all the custom items relevant to the item
+        # create buttons that can display these lists with printIngredients()
         max = 0
         for i in range(0, len(tags_array)):  # Rows
             if ingredients_array[i] != '0':
@@ -267,13 +285,13 @@ class CommonDisplay:
                 self.itemList[i].grid(row=i, column=0, padx=10, sticky="W")
                 if self.itemList[i].winfo_width() > max:
                     max = self.itemList[i].winfo_width()
-                    #ingredients_list = tk.Label(subcanvas, text=ingredients_array[i], borderwidth=2, relief="solid")
-                    #ingredients_list.grid(row=i, column=1)
+                    
         userList = database.Get_Personal_List(username)
         # get the matching array
         matchingArr = googleVision.getMatchingArr(ingredients_array, userList)
         self.printIntersection("ingredients matching your personal list", matchingArr)
 
+    # check out all the general harmful substances for store regular items
     def CheckHarmfulOCR(self):
         if self.noImg():
             return
@@ -282,6 +300,7 @@ class CommonDisplay:
         matchingArr = googleVision.getMatchingArr(responseOCR, harmfulList)
         self.printIntersection("generally harmful ingredients", matchingArr)
 
+    # check out all the general harmful substances for store custom items
     def CheckHarmfulRecognition(self):
         if self.noImg():
             return
@@ -291,11 +310,15 @@ class CommonDisplay:
         matchingArr = googleVision.getMatchingArr(responseRec, harmfulList)
         self.printIntersection("generally harmful ingredients", matchingArr)
 
+    # NOTE: unused. originally planned for user to manually refresh image
+    # final implementation it automatically refreshes. Therefore acceptNextImage never becomes false
+    # accept incoming cropped image
     def MakeAcceptNextImage(self):
         global acceptNextImage
         acceptNextImage = True
         actualPoll()
 
+    # alert users that no items detected
     def noImg(self):
         if objectImg is None:
             self.alert = tk.Label(self,
@@ -305,21 +328,21 @@ class CommonDisplay:
             return True
         return False
 
-
+# class RegularItems is the page in charge of scanning store Regular Items
 class RegularItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         CommonDisplay.__init__(self, message="Scan regular items here", scanFunction=self.CheckIngredientsOCR,
                                parent=parent, controller=controller)
 
-
+# class RegularItems is the page in charge of scanning store Custom Items
 class CustomItems(tk.Frame, CommonDisplay):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         CommonDisplay.__init__(self, message="Scan store custom items here",
                                scanFunction=self.CheckIngredientsRecognition, parent=parent, controller=controller)
 
-
+# this class provides an exit button for the app
 class MainMenu:
     def __init__(self, master):
         menubar = tk.Menu(master)
@@ -328,12 +351,12 @@ class MainMenu:
         menubar.add_cascade(label="File", menu=filemenu)
         master.config(menu=menubar)
 
-
 app = App()
 
-
+# this function will check whether the image has been generated and cropped
+# it will display the newly processed image to the user
 def loadProcessedImage(frame):
-    # tell users to make google vision call
+    # tell users to make google vision call or place an item based on the satus of the image
     global app
     renderingUtil.refresh(app.frames[frame].instruction)
     try:
@@ -344,39 +367,20 @@ def loadProcessedImage(frame):
         app.frames[frame].instruction = tk.Label(app.frames[frame], text="Please place an item in front of the camera", font=('helvetica', 15))
     app.frames[frame].instruction.pack()
 
-    # change the image
+    # update the image when a new image is generated and cropped
     renderingUtil.refresh(app.frames[frame].promptLabel)
     readImg = renderingUtil.resizeImage(objectImg)
     app.frames[frame].img = ImageTk.PhotoImage(readImg)
     app.frames[frame].promptLabel = tk.Label(app.frames[frame], image=app.frames[frame].img)
     app.frames[frame].promptLabel.pack()
 
-
-# def pollPicture():
-#     app.after(1000, pollPicture)
-#
-#     global pictureExists
-#     global newPicture
-#     global buffer
-#     global acceptNextImage
-#     global objectImg
-#     pictureExists, img, newPicture = interface.takeImage()  # sets newPicture to false after first call
-#
-#     if pictureExists and newPicture:
-#         buffer = img
-#
-#         if acceptNextImage:
-#             objectImg = buffer
-#             print(objectImg)
-#             loadProcessedImage(RegularItems)
-#             loadProcessedImage(CustomItems)
-#             acceptNextImage = False
-#
+# this function calls actualPoll() every 1 second
 def pollPicture():
     actualPoll()
     app.after(1000, pollPicture)
 
-
+# check if an image has been processed
+# call loadProcessedImage() if an image is available
 def actualPoll():
     global acceptNextImage
     global objectImg
@@ -391,11 +395,9 @@ def actualPoll():
             # acceptNextImage = False
         ackQueue.put(True)
 
-
-# def pollPicture():
-#     app.after(1000, pollPicture)
-#     print("uwu")
-
+# main function called to instantiate the app main loop
+# it also runs another process besides the mainlopp of the app
+# this other process is the communication protocol between DE1-SoC and the Raspberry Pi
 app.after(3000, pollPicture)
 if __name__ == "__main__":
     producer = mp.Process(target=camera.run, args=(imageQueue, ackQueue))

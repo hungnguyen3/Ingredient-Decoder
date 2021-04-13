@@ -22,7 +22,7 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Result2Activity extends AppCompatActivity {
+public class Result2Activity extends AppCompatActivity { // final result page of scan item function
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -36,7 +36,7 @@ public class Result2Activity extends AppCompatActivity {
         TextView textresult = findViewById(R.id.textresult);
         ImageView imageresult = findViewById(R.id.imageresult);
         textresult.setText("Item name:" + namei + "\n\n" + "Ingredient list:" + ili + "\n\n" + "Store Owner:" + ownerii);
-
+        // variables
         RequestQueue requestQueue = Volley.newRequestQueue(Result2Activity.this);
         JSONObject postData = new JSONObject();
         try {
@@ -44,6 +44,7 @@ public class Result2Activity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        //prepare the API req
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, "http:52.138.39.36:3000/image_get", postData, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
@@ -51,7 +52,7 @@ public class Result2Activity extends AppCompatActivity {
                 try {
                     byte[] decodedString = new byte[0];
                     decodedString = Base64.decode(response.getJSONObject("message").getString("item_image"), Base64.DEFAULT);
-                    Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                    Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length); // convert the base64 to bitmap
                     imageresult.setImageBitmap(decodedByte);
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -65,7 +66,7 @@ public class Result2Activity extends AppCompatActivity {
                 Log.d("myTag", "no resp");
             }
         });
-        requestQueue.add(jsonObjectRequest);
+        requestQueue.add(jsonObjectRequest); // send the req
 
 
     }

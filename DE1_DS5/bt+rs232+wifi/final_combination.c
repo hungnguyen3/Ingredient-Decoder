@@ -58,10 +58,6 @@ int putcharbluetooth (int , volatile unsigned char *,  volatile unsigned char *)
 int getcharbluetooth( volatile unsigned char *,  volatile unsigned char *);
 int TestForReceivedData(volatile unsigned char *);
 void Flush( volatile unsigned char *, volatile unsigned char * );
-void bluetooth_send(void);
-void print_bluetooth_m(char ** Message);
-
-
 
 void Init_RS232(void) {
 	// set bit 7 of Line Control Register to 1, to gain access to the baud rate registers
@@ -137,54 +133,6 @@ void delay(long cycles)
     now = then = clock();
     while( (now-then) < pause )
         now = clock();
-}
-
-void bluetooth_send(void)
-{
-	// wait for 1 second between command
-	// enter these commands in upper case
-	// $$$ enter command mode
-	// SF,1 factory reset
-	// SN,Device1 set device name to “Device1”
-	// SP,1234 set 4 digit pin to “1234”
-	// R,1<CR> reboot bluetooth controller
-	char c, Message[100] ;
-	while(1){
-		printf("\r\nEnter Message for Bluetooth Controller:") ;
-		gets(Message); // get command string from user keyboard
-
-		printf("The Message is:%s\n", Message);
-
-		int iterator= 0;
-		while (Message[iterator] != '\0') {
-			putcharbluetooth(Message[iterator], Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-			iterator++;
-		}
-
-		if(strcmp(Message, "$$$") != 0) {
-  		  	  putcharbluetooth('\r', Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo);
-  		  	  putcharbluetooth('\n',  Bluetooth_LineStatusReg , Bluetooth_TransmitterFifo );
-		}
-		// now read back acknowledge string from device and display on console,
-		// will timeout after no communication for about 2 seconds
-		for(int i = 0; i < 4000000; i ++) {
-			if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
-				c = getcharbluetooth(Bluetooth_LineStatusReg ,   Bluetooth_ReceiverFifo);
-				printf("%c", c);
-				i=0 ;
-			}
-		}
-	}
-}
-
-//give an array of message, print each char of this array one by one
-void print_bluetooth_m(char ** Message) {
-	int iterator=0;
-	while(iterator<100 || Message[iterator]!= NULL){
-		//continue print if the length is not exceed 100 or the message is end
-		printf("%c", Message[iterator] );
-		iterator ++;
-	}
 }
 
 void Init_bluetooth(void) {
@@ -316,8 +264,6 @@ int testWiFi (void){
 
 void wifi_send(char * Message, char * temp){
 	printf("\r\nEnter Message for WiFi Controller: ") ;
-//	gets(Message); // get command string from user keyboard
-//	gets(temp);
 	printf("\r\nhere wifi send");
 	print_wifi_m(Message) ; // write string to bluetooth device
 
@@ -386,9 +332,8 @@ int main(void) {
 	while(1){
 			int usernameCounter = 0;
 			int username[100];
-			// waiting for sign in from the user
 
-
+			// waiting for sign in customer ID from the user
 			while(1){
 				if(TestForReceivedData(Bluetooth_LineStatusReg) == 1) {
 					int c = getcharbluetooth(Bluetooth_LineStatusReg , Bluetooth_ReceiverFifo);

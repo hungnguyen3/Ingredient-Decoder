@@ -70,7 +70,7 @@ import java.util.List;
 import java.util.Scanner;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity {   // basic page of take/upload photos and submit
     private static final int PERMISSION_CODE = 1000;
     private static final int IMAGE_CAPTURE_CODE = 1001;
     private static final int PERMISSION_CODE_UP = 1002;
@@ -79,23 +79,26 @@ public class MainActivity extends AppCompatActivity {
     Button button_scan, button_upload, submit;
     ImageView imageview_a;
     TextView testview;
-
+    String isr = "";
+    // variables
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         String username = getIntent().getStringExtra("input_username");
+        String[] gerlist = {"Ammonium Lauryl Sulfate", "Sodium Laureth Sulfate", "Sodium Lauryl Sulfate", "Parabens", "Paraben", "Sodium Chloride"
+                ,"Diethanolamine", "Triethanolamine", "Formaldehyde", "Alcohol", "Silicones", "Silicon"};  // list of general toxic substances
         button_scan = findViewById(R.id.button_scan);
         button_upload = findViewById(R.id.button_upload);
         imageview_a = findViewById(R.id.imageview_a);
         Log.d("myTag", imageview_a.toString());
         submit = findViewById(R.id.submit);
         testview = findViewById(R.id.testview);
-        submit.setOnClickListener(new View.OnClickListener() {
+        submit.setOnClickListener(new View.OnClickListener() {   // submit button of scan ingredient list function
             @Override
             public void onClick(View v) {
-                if(ok == true){
+                if(ok == true){   // finish the Activityresult
                     String url = "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyDUf4mrRJoR3_XDu8YWaNGV9BXLwpKydYs";
                     BitmapDrawable drawable = (BitmapDrawable) imageview_a.getDrawable();
                     Bitmap bbb = drawable.getBitmap();
@@ -103,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
                     bbb.compress(Bitmap.CompressFormat.PNG,100,bos);
                     byte[] bb = bos.toByteArray();
                     String baseeee = Base64.encodeToString(bb,0);
+                    // convert imageView to Base64
                     RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
                     JSONObject postData = new JSONObject();//http:52.138.39.36:3000/compareplist
 //                    requestQueue.add(sendapi(postData, "http:52.138.39.36:3000/compareplist"));
@@ -125,10 +129,26 @@ public class MainActivity extends AppCompatActivity {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+                    // prepare the API request which will send to google vision API
+
                     JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, postData, new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
                             System.out.println(response);
+                            try {
+                                String is = response.getJSONArray("responses").getJSONObject(0).
+                                        getJSONArray("textAnnotations").getJSONObject(0).getString("description").toLowerCase(); // get the detection result
+                                String isresult = "";
+                                for(int i = 0; i < gerlist.length; i++){
+                                    if(is.contains(gerlist[i].toLowerCase())) isresult = isresult + gerlist[i] +", "; // check with gerlist
+                                }
+                                if(isresult.length() != 0) isr = isresult.substring(0, isresult.length() - 2);
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+
                             JSONObject postData = new JSONObject();
                             try {
                                 postData.put("username", username);
@@ -137,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
-                            requestQueue.add(sendapi(postData, "http:52.138.39.36:3000/compareplist"));
+                            requestQueue.add(sendapi(postData, "http:52.138.39.36:3000/compareplist"));  //send request to backend and compare with user's plist
                         }
                     }, new Response.ErrorListener() {
                         @Override
@@ -152,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
         });
         button_scan.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View v) {    // get permission of camera
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
                     if(checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED ||
                             checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
@@ -170,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
         });
         button_upload.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View v) {     //get permission of reading photos
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
                     if(checkSelfPermission(Manifest.permission.INTERNET) == PackageManager.PERMISSION_DENIED ||
                             checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
@@ -190,13 +210,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void openCamera() {
+    private void openCamera() {  // open carmera
         Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(cameraIntent, IMAGE_CAPTURE_CODE);
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {   //check the permission
         switch (requestCode){
             case PERMISSION_CODE:{
                 if(grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
@@ -219,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {   //Activity result
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == IMAGE_CAPTURE_CODE) {
             if(resultCode == RESULT_OK){
@@ -236,7 +256,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private JsonObjectRequest sendapi(JSONObject a, String url) {
+    private JsonObjectRequest sendapi(JSONObject a, String url) {  // sample API request
 
         JSONObject postData = new JSONObject();
         postData = a;
@@ -248,6 +268,7 @@ public class MainActivity extends AppCompatActivity {
                     testview.setText(response.getString("message"));
                     Intent intent = new Intent(MainActivity.this, Result1Activity.class);
                     intent.putExtra("passtoresult", response.getString("message"));
+                    intent.putExtra("isresult", isr);
                     startActivity(intent);
                 } catch (JSONException e) {
                     e.printStackTrace();

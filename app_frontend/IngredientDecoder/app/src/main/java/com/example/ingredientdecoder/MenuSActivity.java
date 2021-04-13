@@ -8,7 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class MenuSActivity extends AppCompatActivity {
+public class MenuSActivity extends AppCompatActivity { // Menu page of store owner account
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,7 +19,8 @@ public class MenuSActivity extends AppCompatActivity {
         String username = getIntent().getStringExtra("input_username");
         TextView welcome_s = findViewById(R.id.welcome_s);
         welcome_s.setText("Welcome! "+ username);
-        addup.setOnClickListener(new View.OnClickListener() {
+        // variables
+        addup.setOnClickListener(new View.OnClickListener() {  // go to item list
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MenuSActivity.this, MainActivity3.class);
@@ -27,7 +28,7 @@ public class MenuSActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        checkall.setOnClickListener(new View.OnClickListener() {
+        checkall.setOnClickListener(new View.OnClickListener() { // go to add item function
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MenuSActivity.this, checkallActivity.class);

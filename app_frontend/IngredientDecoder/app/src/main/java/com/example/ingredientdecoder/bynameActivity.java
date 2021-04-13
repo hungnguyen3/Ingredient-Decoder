@@ -23,7 +23,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class bynameActivity extends AppCompatActivity {
+public class bynameActivity extends AppCompatActivity { // page of search items by name or owner's name function
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,10 +33,13 @@ public class bynameActivity extends AppCompatActivity {
         Button gotoimage = findViewById(R.id.gotoimage);
         EditText byname = findViewById(R.id.byname);
         String username = getIntent().getStringExtra("input_username");
-        submitname.setOnClickListener(new View.OnClickListener() {
+
+        // variables
+
+        submitname.setOnClickListener(new View.OnClickListener() {                   // submit button of search by item's name
             @Override
             public void onClick(View v) {
-                if(!(byname.getText().toString().equals(""))){
+                if(!(byname.getText().toString().equals(""))){           // check name textview empty or not
 
                     RequestQueue requestQueue = Volley.newRequestQueue(bynameActivity.this);
                     JSONObject postData = new JSONObject();
@@ -45,6 +48,7 @@ public class bynameActivity extends AppCompatActivity {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+                    // perpare the API request
                     JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, "http:52.138.39.36:3000/search_byname", postData, new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
@@ -67,7 +71,7 @@ public class bynameActivity extends AppCompatActivity {
                                 intent.putExtra("il_list", il_list.toArray(new String[0]));
                                 intent.putExtra("image_list", image_list.toArray(new String[0]));
                                 intent.putExtra("owner_list", owner_list.toArray(new String[0]));
-                                startActivity(intent);
+                                startActivity(intent);    // send all result to Result2_listActivity
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
@@ -80,7 +84,7 @@ public class bynameActivity extends AppCompatActivity {
                         }
                     });
                     requestQueue.add(jsonObjectRequest);
-
+                    // send the request
                 }
             }
         });
@@ -88,7 +92,7 @@ public class bynameActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                     Intent intent = new Intent(bynameActivity.this, MainActivity2.class);
-                    startActivity(intent);
+                    startActivity(intent);    // go to MainActivity2
             }
         });
     }
