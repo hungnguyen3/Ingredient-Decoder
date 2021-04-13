@@ -1,11 +1,16 @@
+-- connect to the wifi network
 SSID = "TP-LINK_888"
 SSID_PASSWORD = "12345687"
 wifi.setmode(wifi.STATION)
 wifi.sta.config(SSID,SSID_PASSWORD)
 wifi.sta.autoconnect(1)
 tmr.delay(1000000)
+
+-- Host and URI of the post request
 HOST = "52.138.39.36"
 URI = "/search_byname"
+
+-- Create the post request with a body to the Host and URI specified
 function build_post_request(host, uri, data_table)
     data = ""
     for param,value in pairs(data_table) do
@@ -22,7 +27,8 @@ function build_post_request(host, uri, data_table)
     return request
 end
 
-function send_sms()
+-- function to send the post request
+function send_post_request()
     data = {
      to_search = "Apple"
     }
@@ -35,4 +41,6 @@ function send_sms()
          sck:send(post_request)
     end)
 end
-send_sms()
+
+-- send the post request
+send_post_request()
